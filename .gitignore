@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.log
+.DS_Store
+storage/salida/*
+!storage/salida/.gitkeep
+storage/plantillas/*
+!storage/plantillas/.gitkeep
+storage/assets/*
+!storage/assets/.gitkeep

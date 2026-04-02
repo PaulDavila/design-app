@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email 1 — plantilla base (una imagen, como Email1Editor actual)</title>
+    <!--
+      Editor Email 1 (React) ↔ este HTML:
+
+      • Fondo correo     → #outer-wrap background-color
+      • Logo             → definicion.email1.logoRuta
+      • Texto 1          → #bloque-texto-1
+      • Fondo + imagen   → #cuadro-imagen-unica
+      • Texto 2          → #bloque-texto-2
+      • Footer           → #footer-legal
+      • Prompt IA        → no va en el cuerpo del mail
+    -->
+    <style>
+      body {
+        margin: 0;
+        font-family: Verdana, Geneva, sans-serif;
+      }
+      a {
+        color: #7c3aed;
+      }
+      #outer-wrap {
+        box-sizing: border-box;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 24px;
+        background-color: #dfe3e6;
+      }
+      .card {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+        background: #fff;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+      }
+      .header-logo {
+        display: flex;
+        justify-content: center;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 16px 24px;
+      }
+      .header-logo img {
+        height: 52px;
+        width: auto;
+        max-width: min(290px, 92%);
+        object-fit: contain;
+      }
+      .body-pad {
+        padding: 20px 24px;
+      }
+      .bloque-texto {
+        font-size: 14px;
+        line-height: 1.625;
+        color: #1e293b;
+      }
+      .bloque-texto p {
+        margin: 0 0 8px;
+      }
+      .cuadro-img-unica {
+        position: relative;
+        width: 100%;
+        min-height: 170px;
+        margin: 16px 0;
+        border-radius: 16px;
+        overflow: hidden;
+        background-color: #80beda;
+      }
+      .cuadro-img-unica .placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 500;
+        color: rgb(51 65 85 / 0.7);
+      }
+      .footer-zone {
+        border-top: 1px solid #f1f5f9;
+        background: rgb(248 250 252 / 0.8);
+        padding: 16px 24px;
+      }
+      .footer-legal {
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.625;
+        color: #475569;
+      }
+      .footer-legal p {
+        margin: 0 0 4px;
+      }
+      .social {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 16px;
+        color: #64748b;
+      }
+      .social a {
+        color: inherit;
+        text-decoration: none;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="outer-wrap">
+      <div class="card">
+        <div class="header-logo">
+          <img
+            src="/media/plantillas/miniaturas/logo-abc-logistica.svg"
+            alt="ABC Logística"
+          />
+        </div>
+
+        <div class="body-pad">
+          <div id="bloque-texto-1" class="bloque-texto">
+            <p>Primer bloque (HTML del editor).</p>
+          </div>
+
+          <div id="cuadro-imagen-unica" class="cuadro-img-unica">
+            <div class="placeholder">Ilustración Gemini PNG</div>
+          </div>
+
+          <div id="bloque-texto-2" class="bloque-texto">
+            <p>Segundo bloque.</p>
+          </div>
+        </div>
+
+        <div class="footer-zone">
+          <div id="footer-legal" class="footer-legal">
+            <p>Footer legal / contacto.</p>
+          </div>
+          <div class="social">
+            <a href="#" aria-label="Facebook">Facebook</a>
+            <a href="#" aria-label="LinkedIn">LinkedIn</a>
+            <a href="#" aria-label="Instagram">Instagram</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
