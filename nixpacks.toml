@@ -1,3 +1,5 @@
 # Vite 8 + toolchain del client requieren Node 20.19+ (Railway/Nixpacks usaba 18 por defecto).
 [variables]
 NIXPACKS_NODE_VERSION = "22"
+# npm ci en Linux omitía @rolldown/binding-linux-x64-gnu (lock desde otra OS); install + no production arregla Vite 8.
+NPM_CONFIG_PRODUCTION = "false"

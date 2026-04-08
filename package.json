@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "npm ci --prefix client && npm run build --prefix client",
+    "build": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client",
     "dev": "node index.js",
     "seed": "node scripts/seed-fase2.js",
     "migrate:email-estado": "node scripts/apply-migration-email-estado-programado.js",
