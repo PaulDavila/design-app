@@ -54,19 +54,27 @@ import {
   Search,
   Share2,
 } from 'lucide-react'
+import AdminEmailEnviosHomePanel from './AdminEmailEnviosHomePanel.jsx'
 import Carrusel1Editor from './Carrusel1Editor.jsx'
 import Email1Editor from './Email1Editor.jsx'
+import Newsletter1Editor from './Newsletter1Editor.jsx'
+import { readEmail1IdentityFromSearch } from './email1Identity.js'
 import Email2Editor from './Email2Editor.jsx'
 import Email3Editor from './Email3Editor.jsx'
 import Email4Editor from './Email4Editor.jsx'
 import Cumpleanos1Editor from './Cumpleanos1Editor.jsx'
 import Aniversarios1Editor from './Aniversarios1Editor.jsx'
+import Reconocimientos1Editor from './Reconocimientos1Editor.jsx'
 
 /** En dev, Vite proxy envía /api y /media al backend :4000 */
 const API_BASE =
-  import.meta.env.DEV ? '' : import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '')
 
 const DEMO_USER_ID = 1
+
+/** Email 1: `client/.env.local` → VITE_USER_ID, VITE_USER_ROLE=user|admin|administrativo */
+const EMAIL1_USER_ID = parseInt(import.meta.env.VITE_USER_ID || String(DEMO_USER_ID), 10)
+const EMAIL1_ENV_ROLE = import.meta.env.VITE_USER_ROLE || 'user'
 
 function thumbUrl(rutaMiniatura) {
   if (!rutaMiniatura) return ''
@@ -238,16 +246,29 @@ function PlantillasGrid({
 }
 
 export default function App() {
-  const [vista, setVista] = useState('inicio') // inicio | lista | redes | favoritos | email1_editor | email2_editor | email3_editor | email4_editor | carrusel1_editor | carrusel2_editor | carrusel_numerado_editor | cumpleanos1_editor | aniversarios1_editor
+  const email1Identity = readEmail1IdentityFromSearch(EMAIL1_USER_ID, EMAIL1_ENV_ROLE)
+  const { userId: email1UserId, role: email1Role } = email1Identity
+
+  const [vista, setVista] = useState('inicio') // … | cumpleanos1_editor | aniversarios1_editor | reconocimientos1_editor
   const [plantillaEmail1, setPlantillaEmail1] = useState(null)
+  const [email1OpenFromHome, setEmail1OpenFromHome] = useState(null)
   const [plantillaEmail2, setPlantillaEmail2] = useState(null)
+  const [email2OpenFromHome, setEmail2OpenFromHome] = useState(null)
+  const [email3OpenFromHome, setEmail3OpenFromHome] = useState(null)
   const [plantillaEmail3, setPlantillaEmail3] = useState(null)
   const [plantillaEmail4, setPlantillaEmail4] = useState(null)
+  const [email4OpenFromHome, setEmail4OpenFromHome] = useState(null)
   const [plantillaCarrusel1, setPlantillaCarrusel1] = useState(null)
   const [plantillaCarrusel2, setPlantillaCarrusel2] = useState(null)
   const [plantillaCarruselNumerado, setPlantillaCarruselNumerado] = useState(null)
   const [plantillaCumpleanos1, setPlantillaCumpleanos1] = useState(null)
+  const [cumpleanosOpenFromHome, setCumpleanosOpenFromHome] = useState(null)
   const [plantillaAniversarios1, setPlantillaAniversarios1] = useState(null)
+  const [aniversariosOpenFromHome, setAniversariosOpenFromHome] = useState(null)
+  const [plantillaReconocimientos1, setPlantillaReconocimientos1] = useState(null)
+  const [reconocimientosOpenFromHome, setReconocimientosOpenFromHome] = useState(null)
+  const [plantillaNewsletter1, setPlantillaNewsletter1] = useState(null)
+  const [newsletterOpenFromHome, setNewsletterOpenFromHome] = useState(null)
   const [carruselNumSlides, setCarruselNumSlides] = useState(null)
   const [categoria, setCategoria] = useState(null)
   const [formatoRedes, setFormatoRedes] = useState(null)
@@ -255,6 +276,8 @@ export default function App() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  /** Contador real para la tarjeta de inicio (evita texto fijo desalineado con la BD) */
+  const [avisosPlantillasCount, setAvisosPlantillasCount] = useState(null)
 
   const redesMuestraGrid = useMemo(() => {
     if (
@@ -269,6 +292,7 @@ export default function App() {
   const titulo = useMemo(() => {
     if (vista === 'inicio') return 'Plantillas de diseño'
     if (vista === 'email1_editor') return 'Email 1 — Editor'
+    if (vista === 'newsletter1_editor') return 'Newsletter — Editor'
     if (vista === 'email2_editor') return 'Email 2 — Editor'
     if (vista === 'email3_editor') return 'Email 3 — Editor'
     if (vista === 'email4_editor') return 'Email 4 — Editor'
@@ -277,6 +301,7 @@ export default function App() {
     if (vista === 'carrusel_numerado_editor') return 'Carrusel Numerado — Editor'
     if (vista === 'cumpleanos1_editor') return 'Cumpleaños — Editor'
     if (vista === 'aniversarios1_editor') return 'Aniversarios — Editor'
+    if (vista === 'reconocimientos1_editor') return 'Reconocimientos — Editor'
     if (vista === 'favoritos') return 'Mis favoritos'
     if (categoria === 'avisos_comunicados_emails') return 'Avisos / Comunicados / Emails'
     if (categoria === 'newsletter') return 'Newsletter'
@@ -289,6 +314,131 @@ export default function App() {
     if (categoria === 'redes_sociales') return 'Redes sociales'
     return 'Plantillas'
   }, [vista, categoria, formatoRedes])
+
+  const handleEmail1BootstrapDone = useCallback(() => setEmail1OpenFromHome(null), [])
+  const handleNewsletterBootstrapDone = useCallback(() => setNewsletterOpenFromHome(null), [])
+  const handleEmail2BootstrapDone = useCallback(() => setEmail2OpenFromHome(null), [])
+  const handleEmail3BootstrapDone = useCallback(() => setEmail3OpenFromHome(null), [])
+  const handleEmail4BootstrapDone = useCallback(() => setEmail4OpenFromHome(null), [])
+  const handleCumpleanosBootstrapDone = useCallback(() => setCumpleanosOpenFromHome(null), [])
+  const handleAniversariosBootstrapDone = useCallback(() => setAniversariosOpenFromHome(null), [])
+  const handleReconocimientosBootstrapDone = useCallback(
+    () => setReconocimientosOpenFromHome(null),
+    []
+  )
+
+  const volverInicioDesdeEmail1 = useCallback(() => {
+    setPlantillaEmail1(null)
+    setEmail1OpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeNewsletter = useCallback(() => {
+    setPlantillaNewsletter1(null)
+    setNewsletterOpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeEmail2 = useCallback(() => {
+    setPlantillaEmail2(null)
+    setEmail2OpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeEmail3 = useCallback(() => {
+    setPlantillaEmail3(null)
+    setEmail3OpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeEmail4 = useCallback(() => {
+    setPlantillaEmail4(null)
+    setEmail4OpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeCumpleanos = useCallback(() => {
+    setPlantillaCumpleanos1(null)
+    setCumpleanosOpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeAniversarios = useCallback(() => {
+    setPlantillaAniversarios1(null)
+    setAniversariosOpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const volverInicioDesdeReconocimientos = useCallback(() => {
+    setPlantillaReconocimientos1(null)
+    setReconocimientosOpenFromHome(null)
+    setVista('inicio')
+  }, [])
+
+  const abrirEmailRevisionDesdeHome = useCallback(
+    async (solicitudId, plantillaId, options = {}) => {
+      const plantilla = await fetchJson(
+        `/api/plantillas/${plantillaId}?usuario_id=${email1UserId}`
+      )
+      const boot = {
+        solicitudId,
+        autoPrintPdf: Boolean(options?.autoPrintPdf),
+      }
+      const tipo = options.editor_tipo
+
+      setPlantillaEmail1(null)
+      setPlantillaEmail2(null)
+      setPlantillaEmail3(null)
+      setPlantillaEmail4(null)
+      setPlantillaCumpleanos1(null)
+      setPlantillaAniversarios1(null)
+      setPlantillaReconocimientos1(null)
+      setPlantillaNewsletter1(null)
+      setEmail1OpenFromHome(null)
+      setEmail2OpenFromHome(null)
+      setEmail3OpenFromHome(null)
+      setEmail4OpenFromHome(null)
+      setCumpleanosOpenFromHome(null)
+      setAniversariosOpenFromHome(null)
+      setReconocimientosOpenFromHome(null)
+      setNewsletterOpenFromHome(null)
+
+      if (tipo === 'email3') {
+        setPlantillaEmail3(plantilla)
+        setEmail3OpenFromHome(boot)
+        setVista('email3_editor')
+      } else if (tipo === 'email2') {
+        setPlantillaEmail2(plantilla)
+        setEmail2OpenFromHome(boot)
+        setVista('email2_editor')
+      } else if (tipo === 'email4') {
+        setPlantillaEmail4(plantilla)
+        setEmail4OpenFromHome(boot)
+        setVista('email4_editor')
+      } else if (tipo === 'cumpleanos_1') {
+        setPlantillaCumpleanos1(plantilla)
+        setCumpleanosOpenFromHome(boot)
+        setVista('cumpleanos1_editor')
+      } else if (tipo === 'aniversarios_1') {
+        setPlantillaAniversarios1(plantilla)
+        setAniversariosOpenFromHome(boot)
+        setVista('aniversarios1_editor')
+      } else if (tipo === 'reconocimientos_1') {
+        setPlantillaReconocimientos1(plantilla)
+        setReconocimientosOpenFromHome(boot)
+        setVista('reconocimientos1_editor')
+      } else if (tipo === 'newsletter_1') {
+        setPlantillaNewsletter1(plantilla)
+        setNewsletterOpenFromHome(boot)
+        setVista('newsletter1_editor')
+      } else {
+        setPlantillaEmail1(plantilla)
+        setEmail1OpenFromHome(boot)
+        setVista('email1_editor')
+      }
+    },
+    [email1UserId]
+  )
 
   const cargarPlantillas = useCallback(async () => {
     setLoading(true)
@@ -323,6 +473,26 @@ export default function App() {
   useEffect(() => {
     if (debeCargarLista) void cargarPlantillas()
   }, [debeCargarLista, cargarPlantillas])
+
+  useEffect(() => {
+    if (vista !== 'inicio') return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const params = new URLSearchParams()
+        params.set('categoria', 'avisos_comunicados_emails')
+        const data = await fetchJson(`/api/plantillas?${params}`)
+        if (!cancelled) {
+          setAvisosPlantillasCount(Array.isArray(data) ? data.length : 0)
+        }
+      } catch {
+        if (!cancelled) setAvisosPlantillasCount(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [vista])
 
   const toggleFavorito = async (p) => {
     const favorito = Number(p.es_favorito) === 1
@@ -360,14 +530,24 @@ export default function App() {
     setItems([])
     setError(null)
     setPlantillaEmail1(null)
+    setEmail1OpenFromHome(null)
     setPlantillaEmail2(null)
+    setEmail2OpenFromHome(null)
     setPlantillaEmail3(null)
+    setEmail3OpenFromHome(null)
     setPlantillaEmail4(null)
+    setEmail4OpenFromHome(null)
     setPlantillaCarrusel1(null)
     setPlantillaCarrusel2(null)
     setPlantillaCarruselNumerado(null)
     setPlantillaCumpleanos1(null)
+    setCumpleanosOpenFromHome(null)
     setPlantillaAniversarios1(null)
+    setAniversariosOpenFromHome(null)
+    setPlantillaReconocimientos1(null)
+    setReconocimientosOpenFromHome(null)
+    setPlantillaNewsletter1(null)
+    setNewsletterOpenFromHome(null)
     setCarruselNumSlides(null)
   }
 
@@ -419,31 +599,49 @@ export default function App() {
     }
     if (vista === 'email1_editor') {
       setPlantillaEmail1(null)
+      setEmail1OpenFromHome(null)
+      setVista('lista')
+      return
+    }
+    if (vista === 'newsletter1_editor') {
+      setPlantillaNewsletter1(null)
+      setNewsletterOpenFromHome(null)
       setVista('lista')
       return
     }
     if (vista === 'email2_editor') {
       setPlantillaEmail2(null)
+      setEmail2OpenFromHome(null)
       setVista('lista')
       return
     }
     if (vista === 'email3_editor') {
       setPlantillaEmail3(null)
+      setEmail3OpenFromHome(null)
       setVista('lista')
       return
     }
     if (vista === 'email4_editor') {
       setPlantillaEmail4(null)
+      setEmail4OpenFromHome(null)
       setVista('lista')
       return
     }
     if (vista === 'cumpleanos1_editor') {
       setPlantillaCumpleanos1(null)
+      setCumpleanosOpenFromHome(null)
       setVista('lista')
       return
     }
     if (vista === 'aniversarios1_editor') {
       setPlantillaAniversarios1(null)
+      setAniversariosOpenFromHome(null)
+      setVista('lista')
+      return
+    }
+    if (vista === 'reconocimientos1_editor') {
+      setPlantillaReconocimientos1(null)
+      setReconocimientosOpenFromHome(null)
       setVista('lista')
       return
     }
@@ -490,6 +688,7 @@ export default function App() {
         <div
           className={`mx-auto flex items-center gap-3 px-4 py-3 ${
             vista === 'email1_editor' ||
+            vista === 'newsletter1_editor' ||
             vista === 'email2_editor' ||
             vista === 'email3_editor' ||
             vista === 'email4_editor' ||
@@ -497,7 +696,8 @@ export default function App() {
             vista === 'carrusel2_editor' ||
             vista === 'carrusel_numerado_editor' ||
             vista === 'cumpleanos1_editor' ||
-            vista === 'aniversarios1_editor'
+            vista === 'aniversarios1_editor' ||
+            vista === 'reconocimientos1_editor'
               ? 'max-w-[1600px]'
               : 'max-w-6xl'
           }`}
@@ -519,6 +719,7 @@ export default function App() {
       <main
         className={`mx-auto px-4 py-8 ${
           vista === 'email1_editor' ||
+          vista === 'newsletter1_editor' ||
           vista === 'email2_editor' ||
           vista === 'email3_editor' ||
           vista === 'email4_editor' ||
@@ -526,7 +727,8 @@ export default function App() {
           vista === 'carrusel2_editor' ||
           vista === 'carrusel_numerado_editor' ||
           vista === 'cumpleanos1_editor' ||
-          vista === 'aniversarios1_editor'
+          vista === 'aniversarios1_editor' ||
+          vista === 'reconocimientos1_editor'
             ? 'max-w-[1600px]'
             : 'max-w-6xl'
         }`}
@@ -551,85 +753,168 @@ export default function App() {
         )}
 
         {vista === 'email1_editor' && plantillaEmail1 && (
-          <Email1Editor plantilla={plantillaEmail1} />
+          <Email1Editor
+            plantilla={plantillaEmail1}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={email1OpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={email1OpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleEmail1BootstrapDone}
+            onVolverAlInicio={volverInicioDesdeEmail1}
+          />
+        )}
+
+        {vista === 'newsletter1_editor' && plantillaNewsletter1 && (
+          <Newsletter1Editor
+            plantilla={plantillaNewsletter1}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={newsletterOpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={newsletterOpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleNewsletterBootstrapDone}
+            onVolverAlInicio={volverInicioDesdeNewsletter}
+          />
         )}
 
         {vista === 'email2_editor' && plantillaEmail2 && (
-          <Email2Editor plantilla={plantillaEmail2} />
+          <Email2Editor
+            plantilla={plantillaEmail2}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={email2OpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={email2OpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleEmail2BootstrapDone}
+            onVolverAlInicio={volverInicioDesdeEmail2}
+          />
         )}
 
         {vista === 'email3_editor' && plantillaEmail3 && (
-          <Email3Editor plantilla={plantillaEmail3} />
+          <Email3Editor
+            plantilla={plantillaEmail3}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={email3OpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={email3OpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleEmail3BootstrapDone}
+            onVolverAlInicio={volverInicioDesdeEmail3}
+          />
         )}
 
         {vista === 'email4_editor' && plantillaEmail4 && (
-          <Email4Editor plantilla={plantillaEmail4} />
+          <Email4Editor
+            plantilla={plantillaEmail4}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={email4OpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={email4OpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleEmail4BootstrapDone}
+            onVolverAlInicio={volverInicioDesdeEmail4}
+          />
         )}
         {vista === 'cumpleanos1_editor' && plantillaCumpleanos1 && (
-          <Cumpleanos1Editor plantilla={plantillaCumpleanos1} />
+          <Cumpleanos1Editor
+            plantilla={plantillaCumpleanos1}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={cumpleanosOpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={cumpleanosOpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleCumpleanosBootstrapDone}
+            onVolverAlInicio={volverInicioDesdeCumpleanos}
+          />
         )}
         {vista === 'aniversarios1_editor' && plantillaAniversarios1 && (
-          <Aniversarios1Editor plantilla={plantillaAniversarios1} />
+          <Aniversarios1Editor
+            plantilla={plantillaAniversarios1}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={aniversariosOpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={aniversariosOpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleAniversariosBootstrapDone}
+            onVolverAlInicio={volverInicioDesdeAniversarios}
+          />
+        )}
+        {vista === 'reconocimientos1_editor' && plantillaReconocimientos1 && (
+          <Reconocimientos1Editor
+            plantilla={plantillaReconocimientos1}
+            userId={email1UserId}
+            role={email1Role}
+            bootstrapSolicitudId={reconocimientosOpenFromHome?.solicitudId ?? null}
+            bootstrapAutoPrintPdf={reconocimientosOpenFromHome?.autoPrintPdf ?? false}
+            onBootstrapSolicitudDone={handleReconocimientosBootstrapDone}
+            onVolverAlInicio={volverInicioDesdeReconocimientos}
+          />
         )}
 
         {vista === 'inicio' && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <button
-              type="button"
-              onClick={() => irLista('avisos_comunicados_emails')}
-              className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                <Mail className="h-6 w-6" />
-              </span>
-              <span className="text-base font-semibold text-slate-900">
-                Avisos / Comunicados / Emails
-              </span>
-              <span className="text-sm text-slate-500">6 plantillas</span>
-            </button>
+          <div className="space-y-0">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => irLista('avisos_comunicados_emails')}
+                className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                  <Mail className="h-6 w-6" />
+                </span>
+                <span className="text-base font-semibold text-slate-900">
+                  Avisos / Comunicados / Emails
+                </span>
+                <span className="text-sm text-slate-500">
+                  {avisosPlantillasCount == null
+                    ? '…'
+                    : `${avisosPlantillasCount} plantilla${avisosPlantillasCount === 1 ? '' : 's'}`}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => irLista('newsletter')}
-              className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                <LayoutGrid className="h-6 w-6" />
-              </span>
-              <span className="text-base font-semibold text-slate-900">Newsletter</span>
-              <span className="text-sm text-slate-500">1 plantilla</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => irLista('newsletter')}
+                className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <LayoutGrid className="h-6 w-6" />
+                </span>
+                <span className="text-base font-semibold text-slate-900">Newsletter</span>
+                <span className="text-sm text-slate-500">1 plantilla</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setCategoria('redes_sociales')
-                setFormatoRedes(null)
-                setItems([])
-                setBusqueda('')
-                setError(null)
-                setVista('redes')
-              }}
-              className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
-                <Share2 className="h-6 w-6" />
-              </span>
-              <span className="text-base font-semibold text-slate-900">Redes sociales</span>
-              <span className="text-sm text-slate-500">Carrusel, imagen y portadas</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoria('redes_sociales')
+                  setFormatoRedes(null)
+                  setItems([])
+                  setBusqueda('')
+                  setError(null)
+                  setVista('redes')
+                }}
+                className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                  <Share2 className="h-6 w-6" />
+                </span>
+                <span className="text-base font-semibold text-slate-900">Redes sociales</span>
+                <span className="text-sm text-slate-500">Carrusel, imagen y portadas</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={irFavoritos}
-              className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-rose-200 hover:shadow-md"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
-                <Heart className="h-6 w-6" />
-              </span>
-              <span className="text-base font-semibold text-slate-900">Mis favoritos</span>
-              <span className="text-sm text-slate-500">Plantillas guardadas</span>
-            </button>
+              <button
+                type="button"
+                onClick={irFavoritos}
+                className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-rose-200 hover:shadow-md"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                  <Heart className="h-6 w-6" />
+                </span>
+                <span className="text-base font-semibold text-slate-900">Mis favoritos</span>
+                <span className="text-sm text-slate-500">Plantillas guardadas</span>
+              </button>
+            </div>
+
+            <AdminEmailEnviosHomePanel
+              userId={email1UserId}
+              viewerRole={email1Role}
+              onAbrirEnEditor={abrirEmailRevisionDesdeHome}
+            />
           </div>
         )}
 
@@ -779,9 +1064,22 @@ export default function App() {
                     } else if (p.grupo_layout === 'aniversarios_1' || p.nombre === 'Aniversarios') {
                       setPlantillaAniversarios1(p)
                       setVista('aniversarios1_editor')
+                    } else if (
+                      p.grupo_layout === 'reconocimientos_1' ||
+                      p.nombre === 'Reconocimientos'
+                    ) {
+                      setPlantillaReconocimientos1(p)
+                      setVista('reconocimientos1_editor')
                     }
                   }
-                : undefined
+                : categoria === 'newsletter'
+                  ? (p) => {
+                      if (p.grupo_layout === 'newsletter_1' || p.nombre === 'Newsletter 1') {
+                        setPlantillaNewsletter1(p)
+                        setVista('newsletter1_editor')
+                      }
+                    }
+                  : undefined
             }
           />
         )}

@@ -10,3 +10,67 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Email 1–3: impresión / Guardar como PDF (body.email1-print-active desde los editores) */
+@media print {
+  /* --email1-fondo-correo la define Email1Editor al montar; franja del margen @page puede seguir blanca según navegador */
+  html:has(body.email1-print-active),
+  body.email1-print-active {
+    background-color: var(--email1-fondo-correo, #ffffff) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.email1-print-active header {
+    display: none !important;
+  }
+
+  body.email1-print-active aside {
+    display: none !important;
+  }
+
+  body.email1-print-active main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  body.email1-print-active #root {
+    background: transparent !important;
+  }
+
+  body.email1-print-active .email1-print-section {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body.email1-print-active .email1-print-hide {
+    display: none !important;
+  }
+
+  body.email1-print-active .email1-preview-canvas {
+    min-height: auto !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background-color: var(--email1-fondo-correo, #ffffff) !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.email1-print-active .email1-print-area {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 12mm;
+    size: A4 portrait;
+  }
+}

@@ -1,5 +1,7 @@
 node_modules/
 .env
+*.pem
+client/dist/
 *.log
 .DS_Store
 storage/salida/*

@@ -72,6 +72,18 @@ function hexToRgb(hex) {
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
+/**
+ * `ratio` del body → `imageConfig.aspectRatio` de Gemini (valores documentados por la API).
+ */
+function carouselRatioToApiAspect(ratio) {
+  if (ratio === '4_5') return '4:5';
+  if (ratio === '4_3') return '4:3';
+  if (ratio === '16_9') return '16:9';
+  if (ratio === '5_4') return '5:4';
+  if (ratio === '16_10') return '16:9';
+  return '1:1';
+}
+
 const CAROUSEL_BACKGROUND_HEX = '#e9edef';
 const FIXED_VARIATION_SEED = '1';
 const EMAIL_ASPECT_RATIO = '21:9';
@@ -187,13 +199,15 @@ function extractImageFromResponse(data) {
  * Cuerpo REST alineado con la documentación oficial (generateContent + imageConfig).
  * @see https://ai.google.dev/gemini-api/docs/image-generation
  */
-function buildRequestBody(prompt, ratio, backgroundHexParsed) {
+function buildRequestBody(prompt, ratio, backgroundHexParsed, opts = {}) {
   const imageSize = process.env.NANO_BANANA_IMAGE_SIZE || '1K';
+  const carouselStyleBg =
+    Boolean(opts.carouselStyleBackground) && Boolean(backgroundHexParsed);
 
   let aspectRatio;
   let headerBlock;
 
-  if (backgroundHexParsed) {
+  if (backgroundHexParsed && !carouselStyleBg) {
     aspectRatio = EMAIL_ASPECT_RATIO;
     const { r, g, b } = hexToRgb(backgroundHexParsed);
     headerBlock = [
@@ -202,8 +216,17 @@ function buildRequestBody(prompt, ratio, backgroundHexParsed) {
       `Aspect ratio ${aspectRatio}, email asset; keep background ${backgroundHexParsed}.`,
       `Variation seed: ${FIXED_VARIATION_SEED}.`,
     ].join(' ');
+  } else if (carouselStyleBg) {
+    aspectRatio = carouselRatioToApiAspect(ratio);
+    const { r, g, b } = hexToRgb(backgroundHexParsed);
+    headerBlock = [
+      `BACKGROUND (highest priority): one flat opaque fill only, exact ${backgroundHexParsed} rgb(${r}, ${g}, ${b}). No gradients, textures, patterns, checkerboard, or any other background color.`,
+      `No color drift: the fill must remain visually identical to ${backgroundHexParsed} across the entire image—pure white means rgb(255,255,255) only.`,
+      `Aspect ratio ${aspectRatio}, hero illustration; keep the entire canvas background ${backgroundHexParsed}.`,
+      `Variation seed: ${FIXED_VARIATION_SEED}.`,
+    ].join(' ');
   } else {
-    aspectRatio = ratio === '4_5' ? '4:5' : '1:1';
+    aspectRatio = carouselRatioToApiAspect(ratio);
     const { r, g, b } = hexToRgb(CAROUSEL_BACKGROUND_HEX);
     headerBlock = [
       `BACKGROUND (highest priority): one flat opaque fill only, exact ${CAROUSEL_BACKGROUND_HEX} rgb(${r}, ${g}, ${b}). No gradients, textures, patterns, checkerboard, or any other background color.`,
@@ -281,9 +304,18 @@ function sleep(ms) {
 
 router.post('/generate', async (req, res) => {
   try {
-    const ratio = req.body?.ratio === '4_5' ? '4_5' : '1_1';
+    const rawRatio = req.body?.ratio;
+    const ratio =
+      rawRatio === '4_5' ||
+      rawRatio === '4_3' ||
+      rawRatio === '5_4' ||
+      rawRatio === '16_9' ||
+      rawRatio === '16_10'
+        ? rawRatio
+        : '1_1';
     const prompt = safeText(req.body?.prompt || '');
     const backgroundHexParsed = parseBackgroundHex(req.body?.backgroundHex);
+    const carouselStyleBackground = req.body?.carouselStyleBackground === true;
 
     if (!prompt) {
       return res.status(400).json({ ok: false, error: 'Prompt vacío' });
@@ -297,7 +329,9 @@ router.post('/generate', async (req, res) => {
       });
     }
 
-    const body = buildRequestBody(prompt, ratio, backgroundHexParsed);
+    const body = buildRequestBody(prompt, ratio, backgroundHexParsed, {
+      carouselStyleBackground,
+    });
 
     let attempt = 0;
     const maxAttempts = 2;

@@ -33,10 +33,24 @@ function defEmail1() {
   });
 }
 
+/** Newsletter 1 — mismo layout que Email 1, logo dedicado en miniaturas/logo-newsletter.svg */
+function defNewsletter1() {
+  return JSON.stringify({
+    dimensiones: { ancho: 600, alto: 2400 },
+    tipoPlantilla: 'email_html',
+    email1: {
+      paletaFondoCorreo: EMAIL1_FONDO,
+      paletaCuadroImagen: EMAIL1_IMG,
+      logoRuta: 'miniaturas/logo-newsletter.svg',
+    },
+    capas: [],
+  });
+}
+
 function buildRows() {
   const rows = [];
 
-  // Avisos / comunicados / email: 6 plantillas (1–4 numeradas; Cumpleaños; Aniversarios) + miniaturas propias
+  // Avisos / comunicados / email: 7 plantillas (1–4; Cumpleaños; Aniversarios; Reconocimientos) + miniaturas propias
   const avisosEmails = [
     { nombre: 'Email 1', layout_indice: 1, grupo_layout: 'email_1', ruta_miniatura: 'miniaturas/email-1.png' },
     { nombre: 'Email 2', layout_indice: 2, grupo_layout: 'email_2', ruta_miniatura: 'miniaturas/email-2.png' },
@@ -52,6 +66,12 @@ function buildRows() {
       nombre: 'Aniversarios',
       layout_indice: 6,
       grupo_layout: 'email_6',
+      ruta_miniatura: 'miniaturas/email-aniversarios.png',
+    },
+    {
+      nombre: 'Reconocimientos',
+      layout_indice: 7,
+      grupo_layout: 'reconocimientos_1',
       ruta_miniatura: 'miniaturas/email-aniversarios.png',
     },
   ];
@@ -80,7 +100,7 @@ function buildRows() {
     layout_indice: 1,
     ratio_variante: null,
     grupo_layout: 'newsletter_1',
-    definicion: def(600, 1200),
+    definicion: defNewsletter1(),
     ruta_imagen_base: BASE,
     ruta_miniatura: 'miniaturas/newsletter.png',
   });

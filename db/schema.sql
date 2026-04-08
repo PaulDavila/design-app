@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL,
   nombre VARCHAR(255) DEFAULT NULL,
+  role ENUM('user', 'admin', 'administrativo') NOT NULL DEFAULT 'user',
   activo TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uk_email (email)
@@ -62,6 +63,27 @@ CREATE TABLE IF NOT EXISTS comunicados (
   KEY idx_estado (estado),
   CONSTRAINT fk_comunicados_usuario FOREIGN KEY (usuario_id) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_comunicados_plantilla FOREIGN KEY (plantilla_id) REFERENCES plantillas (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS email_envios_solicitud (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  plantilla_id INT UNSIGNED NOT NULL,
+  creado_por_user_id INT UNSIGNED NOT NULL,
+  editor_tipo VARCHAR(32) NOT NULL DEFAULT 'email1',
+  payload JSON NOT NULL,
+  enviar_todos TINYINT(1) NOT NULL DEFAULT 1,
+  destinatarios TEXT NULL,
+  fecha_hora_programada DATETIME NOT NULL,
+  estado ENUM('pendiente_revision', 'programado') NOT NULL DEFAULT 'pendiente_revision',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  enviado_en DATETIME NULL DEFAULT NULL,
+  error_envio TEXT NULL DEFAULT NULL,
+  KEY idx_estado (estado),
+  KEY idx_fecha_prog (fecha_hora_programada),
+  KEY idx_creador (creado_por_user_id),
+  CONSTRAINT fk_ees_plantilla FOREIGN KEY (plantilla_id) REFERENCES plantillas (id) ON DELETE CASCADE,
+  CONSTRAINT fk_ees_user FOREIGN KEY (creado_por_user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

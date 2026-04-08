@@ -6,6 +6,8 @@ import StarterKit from '@tiptap/starter-kit'
 import { EMAIL_RICH_EDITOR_LIST_CLASSES } from './emailRichTextClasses.js'
 import { htmlOrPlainToPreview } from './utils/sanitizeEmailHtml.js'
 import { LogoCarruselMedio } from './LogoCarruselMedio.jsx'
+import ImageGenCharactersWarning from './ImageGenCharactersWarning.jsx'
+import { syncCloneComputedColorsForHtml2Canvas } from './utils/syncCloneComputedColorsForHtml2Canvas.js'
 
 const RATIOS = {
   '1_1': { label: '1:1', ancho: 1080, alto: 1080, aspectCss: '1 / 1' },
@@ -16,7 +18,7 @@ const RATIOS = {
 const FALLBACK_SLIDES_TOTAL = 5
 
 const API_BASE =
-  import.meta.env.DEV ? '' : import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '')
 
 const RUTA_LOGO_PORTADA = 'miniaturas/logo-portada.svg'
 const RUTA_LOGO_PORTADA_4_5 = 'miniaturas/logo-portada-4-5.svg'
@@ -24,9 +26,9 @@ const RUTA_LOGO_PORTADA_4_5 = 'miniaturas/logo-portada-4-5.svg'
 const RUTA_LOGO_CARRUSEL_4_5 = 'miniaturas/logo-carrusel-4-5.svg'
 const RUTA_LOGO_CARRUSEL_FINAL_1_1 = 'miniaturas/logo-carrusel-final-1-1.svg'
 const RUTA_LOGO_CARRUSEL_FINAL_4_5 = 'miniaturas/logo-carrusel-final-4-5.svg'
-/** Gris del contenedor de la portada en vista previa. */
+/** Gris del contenedor de la portada en vista previa (carruseles distintos de carrusel 1). */
 const PORTADA_VISTA_PREVIA_FONDO_HEX = '#eceff1'
-/** Hex fijo para el fondo en las imagenes generadas (prompts a la IA); no tiene que coincidir con el gris del contenedor. */
+/** Gris fijo carrusel 1: vista previa, prompt y API (sin selector). */
 const PORTADA_CARRUSEL_1_FONDO_IMAGEN_HEX = '#e9edef'
 /** Instrucciones generales enviadas a la IA (el usuario no las ve). El orden importa: primero fondo obligatorio. */
 const PROMPT_FONDO_OBLIGATORIA_PORTADA =
@@ -73,47 +75,6 @@ function markupFinalSlideSvg(svgText, accentHex) {
   s = s.replace(/#bcdae7/gi, pillFill)
   s = s.replace(/<svg\b([^>]*)>/i, '<svg$1 preserveAspectRatio="xMidYMax slice" class="block h-full w-full">')
   return s
-}
-
-/**
- * html2canvas 1.x no parsea `oklch()` (Tailwind v4). El navegador ya devuelve rgb/rgba en getComputedStyle.
- */
-function syncCloneComputedColorsForHtml2Canvas(orig, clone) {
-  if (!(orig instanceof Element) || !(clone instanceof Element)) return
-
-  if (orig instanceof HTMLElement && clone instanceof HTMLElement) {
-    const cs = window.getComputedStyle(orig)
-    const bg = cs.backgroundColor
-    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
-      clone.style.backgroundColor = bg
-    }
-    const col = cs.color
-    if (col) clone.style.color = col
-    const bc = cs.borderColor
-    if (bc && bc !== 'rgba(0, 0, 0, 0)') {
-      clone.style.borderColor = bc
-    }
-    const bs = cs.boxShadow
-    if (bs && bs !== 'none') {
-      clone.style.boxShadow = bs
-    }
-  }
-
-  if (orig instanceof SVGElement && clone instanceof SVGElement) {
-    const cs = window.getComputedStyle(orig)
-    const fill = cs.fill
-    if (fill && fill !== 'none') clone.setAttribute('fill', fill)
-    const stroke = cs.stroke
-    if (stroke && stroke !== 'none') clone.setAttribute('stroke', stroke)
-  }
-
-  for (let i = 0; i < orig.children.length; i++) {
-    const oc = orig.children[i]
-    const cc = clone.children[i]
-    if (oc instanceof Element && cc instanceof Element) {
-      syncCloneComputedColorsForHtml2Canvas(oc, cc)
-    }
-  }
 }
 
 function parseDefinicion(raw) {
@@ -305,7 +266,7 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
   const [openedAccordionId, setOpenedAccordionId] = useState(null)
   /** Mapa futuro `id` → datos del slide (texto, assets, etc.). */
   const [slidesContenido, setSlidesContenido] = useState({})
-  /** Descripción de imagen por panel (portada / slide-N) para Nano Banana; solo UI por ahora. */
+  /** Descripción de imagen por panel cuando NO es carrusel 1 (UI legacy). */
   const [descripcionesImagenNanoBanana, setDescripcionesImagenNanoBanana] = useState({})
   /** HTML de portada (TipTap: base 300, negrita 900, cursiva). */
   const [textoPortadaPlano, setTextoPortadaPlano] = useState('')
@@ -333,11 +294,14 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
   const jpgExportLockRef = useRef(false)
   const [exportingJpg, setExportingJpg] = useState(false)
   const [jpgExportError, setJpgExportError] = useState(null)
-  const [promptPortadaUsuario, setPromptPortadaUsuario] = useState('')
-  const [imagenPortadaUrl, setImagenPortadaUrl] = useState('')
-  const [imagenPortadaSizePct, setImagenPortadaSizePct] = useState(100)
-  const [generandoImagenPortada, setGenerandoImagenPortada] = useState(false)
-  const [imagenPortadaError, setImagenPortadaError] = useState('')
+  /** Carrusel 1: IA por panel (`portada`, `slide-1`, …): prompt, url, zoom, pan. */
+  const [nbPromptByPanel, setNbPromptByPanel] = useState({})
+  const [nbUrlByPanel, setNbUrlByPanel] = useState({})
+  const [nbZoomByPanel, setNbZoomByPanel] = useState({})
+  const [nbPanXByPanel, setNbPanXByPanel] = useState({})
+  const [nbPanYByPanel, setNbPanYByPanel] = useState({})
+  const [nbGenPanelId, setNbGenPanelId] = useState(null)
+  const [nbErrByPanel, setNbErrByPanel] = useState({})
 
   useEffect(() => {
     setRatio(ratioInicial)
@@ -678,11 +642,43 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
     [textoPortadaPlano],
   )
 
-  const handleGenerarImagenPortada = async () => {
-    setImagenPortadaError('')
-    setGenerandoImagenPortada(true)
+  const carrusel1PreviewPanelKey = useMemo(() => {
+    if (previewPanelId === 'portada') return 'portada'
+    if (String(previewPanelId).startsWith('slide-')) return previewPanelId
+    return null
+  }, [previewPanelId])
+
+  /** Pan + zoom en el cuadro gris (misma lógica portada y slides). */
+  const carrusel1ImagenPanTransform = useMemo(() => {
+    if (!isCarrusel1 || !carrusel1PreviewPanelKey) {
+      return {
+        transform: 'translate(0%,0%) scale(1)',
+        transformOrigin: 'center center',
+      }
+    }
+    const pid = carrusel1PreviewPanelKey
+    const z = (nbZoomByPanel[pid] ?? 100) / 100
+    const lim = 62 * Math.max(1, z)
+    const px = nbPanXByPanel[pid] ?? 50
+    const py = nbPanYByPanel[pid] ?? 50
+    const tx = ((50 - px) / 50) * lim
+    const ty = ((50 - py) / 50) * lim
+    return {
+      transform: `translate(${tx}%, ${ty}%) scale(${z})`,
+      transformOrigin: 'center center',
+    }
+  }, [isCarrusel1, carrusel1PreviewPanelKey, nbZoomByPanel, nbPanXByPanel, nbPanYByPanel])
+
+  const carrusel1PreviewImageUrl = useMemo(() => {
+    if (!isCarrusel1 || !carrusel1PreviewPanelKey) return ''
+    return nbUrlByPanel[carrusel1PreviewPanelKey] || ''
+  }, [isCarrusel1, carrusel1PreviewPanelKey, nbUrlByPanel])
+
+  const handleGenerarImagenPanel = async (panelId) => {
+    setNbErrByPanel((prev) => ({ ...prev, [panelId]: '' }))
+    setNbGenPanelId(panelId)
     try {
-      const idea = String(promptPortadaUsuario || '').trim()
+      const idea = String(nbPromptByPanel[panelId] || '').trim()
       const promptFinal = [
         PROMPT_FONDO_OBLIGATORIA_PORTADA,
         PROMPT_BASE_PORTADA_CARRUSEL_1,
@@ -694,10 +690,11 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ratio,
-          // nonce fuerza variacion entre regeneraciones consecutivas.
+          ratio: '1_1',
           nonce: Date.now(),
           prompt: promptFinal,
+          backgroundHex: PORTADA_CARRUSEL_1_FONDO_IMAGEN_HEX,
+          carouselStyleBackground: true,
         }),
       })
       if (!res.ok) {
@@ -716,11 +713,14 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
       }
       const data = await res.json()
       if (!data?.imageUrl) throw new Error('Respuesta sin imageUrl')
-      setImagenPortadaUrl(String(data.imageUrl))
+      setNbUrlByPanel((prev) => ({ ...prev, [panelId]: String(data.imageUrl) }))
     } catch (err) {
-      setImagenPortadaError(err instanceof Error ? err.message : 'No se pudo generar la imagen')
+      setNbErrByPanel((prev) => ({
+        ...prev,
+        [panelId]: err instanceof Error ? err.message : 'No se pudo generar la imagen',
+      }))
     } finally {
-      setGenerandoImagenPortada(false)
+      setNbGenPanelId(null)
     }
   }
 
@@ -816,48 +816,95 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                     placeholder="Escribe el texto del slide..."
                   />
                 )}
-                {panel.id === 'portada' && isCarrusel1 ? (
+                {isCarrusel1 ? (
                   <div className="mt-3 space-y-2 rounded-xl border border-dashed border-slate-300 bg-amber-50/50 p-3">
+                    <ImageGenCharactersWarning />
                     <label className="mb-1 block text-xs font-medium text-slate-700">
                       Idea del usuario (se suma al prompt base)
                     </label>
                     <textarea
-                      value={promptPortadaUsuario}
-                      onChange={(e) => setPromptPortadaUsuario(e.target.value)}
+                      value={nbPromptByPanel[panel.id] || ''}
+                      onChange={(e) =>
+                        setNbPromptByPanel((prev) => ({ ...prev, [panel.id]: e.target.value }))
+                      }
                       rows={3}
-                      placeholder="Describe lo que quieres para la portada..."
+                      placeholder={
+                        panel.id === 'portada'
+                          ? 'Describe lo que quieres para la portada…'
+                          : `Describe lo que quieres para ${panel.label.toLowerCase()}…`
+                      }
                       className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none ring-amber-500/20 focus:ring-2"
                     />
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => void handleGenerarImagenPortada()}
-                        disabled={generandoImagenPortada}
+                        onClick={() => void handleGenerarImagenPanel(panel.id)}
+                        disabled={nbGenPanelId === panel.id}
                         className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-800 disabled:pointer-events-none disabled:opacity-60"
                       >
-                        {generandoImagenPortada ? 'Generando imagen…' : 'Generar imagen'}
+                        {nbGenPanelId === panel.id ? 'Generando imagen…' : 'Generar imagen'}
                       </button>
                     </div>
                     <div className="pt-1">
                       <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Tamano de imagen ({imagenPortadaSizePct}%)
+                        Zoom ({nbZoomByPanel[panel.id] ?? 100}%): 100 llena el cuadro gris; más grande recorta
+                        bordes; más chico deja margen.
+                      </label>
+                      <input
+                        type="range"
+                        min={25}
+                        max={200}
+                        step={1}
+                        value={nbZoomByPanel[panel.id] ?? 100}
+                        onChange={(e) => {
+                          const n = Number.parseInt(e.target.value, 10)
+                          const v = Number.isFinite(n) ? Math.min(200, Math.max(25, n)) : 100
+                          setNbZoomByPanel((prev) => ({ ...prev, [panel.id]: v }))
+                        }}
+                        className="w-full accent-slate-700"
+                      />
+                    </div>
+                    <div className="pt-1">
+                      <label className="mb-1 block text-xs font-medium text-slate-700">
+                        Posición horizontal ({nbPanXByPanel[panel.id] ?? 50}%): 0 a la izquierda del cuadro gris —
+                        50 centro — 100 a la derecha. Con zoom alto puedes recorrer toda el área.
                       </label>
                       <input
                         type="range"
                         min={0}
                         max={100}
                         step={1}
-                        value={imagenPortadaSizePct}
+                        value={nbPanXByPanel[panel.id] ?? 50}
                         onChange={(e) => {
                           const n = Number.parseInt(e.target.value, 10)
-                          setImagenPortadaSizePct(Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 100)
+                          const v = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 50
+                          setNbPanXByPanel((prev) => ({ ...prev, [panel.id]: v }))
                         }}
                         className="w-full accent-slate-700"
                       />
                     </div>
-                    {imagenPortadaError ? (
+                    <div className="pt-1">
+                      <label className="mb-1 block text-xs font-medium text-slate-700">
+                        Posición vertical ({nbPanYByPanel[panel.id] ?? 50}%): 0 arriba del cuadro gris — 50 centro —
+                        100 abajo (sube el encuadre para ver los pies). A mayor zoom, más recorrido.
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={nbPanYByPanel[panel.id] ?? 50}
+                        onChange={(e) => {
+                          const n = Number.parseInt(e.target.value, 10)
+                          const v = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 50
+                          setNbPanYByPanel((prev) => ({ ...prev, [panel.id]: v }))
+                        }}
+                        className="w-full accent-slate-700"
+                      />
+                    </div>
+                    {nbErrByPanel[panel.id] ? (
                       <p className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[11px] text-red-700">
-                        {imagenPortadaError}
+                        {nbErrByPanel[panel.id]}
                       </p>
                     ) : null}
                   </div>
@@ -922,44 +969,37 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                   backgroundColor:
                     isCarruselNumerado && previewPanelId === 'portada'
                       ? '#ffffff'
-                      : PORTADA_VISTA_PREVIA_FONDO_HEX,
+                      : isCarrusel1
+                        ? PORTADA_CARRUSEL_1_FONDO_IMAGEN_HEX
+                        : PORTADA_VISTA_PREVIA_FONDO_HEX,
                 }}
               >
+                {isCarrusel1 && carrusel1PreviewImageUrl ? (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[20px]"
+                    aria-hidden
+                  >
+                    <div className="h-full w-full" style={carrusel1ImagenPanTransform}>
+                      <img
+                        src={carrusel1PreviewImageUrl}
+                        alt=""
+                        className="block h-full w-full object-cover"
+                        draggable={false}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
                 {previewPanelId === 'portada' ? (
                   <div
                     ref={portadaBlueRef}
-                    className="pointer-events-none absolute left-0 top-0 z-0 w-full rounded-[20px]"
+                    className="pointer-events-none absolute left-0 top-0 z-[5] w-full rounded-[20px]"
                     style={{
                       backgroundColor: portadaCuadroColor,
                       height: `${portadaBluePct}%`,
                     }}
                     aria-hidden
                   />
-                ) : null}
-
-                {previewPanelId === 'portada' && isCarrusel1 && imagenPortadaUrl ? (
-                  <div
-                    className="pointer-events-none absolute left-0 z-[1] w-full"
-                    style={{
-                      top: `${portadaBluePct}%`,
-                      height: `${Math.max(0, 100 - portadaBluePct)}%`,
-                      padding: '12px 18px 18px 18px',
-                      boxSizing: 'border-box',
-                    }}
-                    aria-hidden
-                  >
-                    <div className="flex h-full w-full items-end justify-center">
-                      <img
-                        src={imagenPortadaUrl}
-                        alt=""
-                        className="object-contain"
-                        style={{
-                          width: `${imagenPortadaSizePct}%`,
-                          height: `${imagenPortadaSizePct}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
                 ) : null}
 
                 {activeSlideId ? (
@@ -1036,7 +1076,7 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                 {previewPanelId === 'portada' ? (
                   <div
                     ref={portadaTextBoxRef}
-                    className="absolute left-0 top-0 z-[3] flex w-full items-center justify-center text-center"
+                    className="absolute left-0 top-0 z-[10] flex w-full items-center justify-center text-center"
                     style={{
                       height: `${portadaBluePct}%`,
                       padding: 20,
