@@ -19,7 +19,7 @@
   "license": "ISC",
   "description": "App interna de comunicados con IA — backend Sprint 1",
   "engines": {
-    "node": ">=20.19.0"
+    "node": "22.x"
   },
   "dependencies": {
     "cors": "^2.8.5",
