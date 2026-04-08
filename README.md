@@ -2,12 +2,10 @@
 
 App interna de comunicados con IA. Backend en Node.js + Express + MySQL + Sharp. Catálogo de plantillas en **React + Vite + Tailwind** (`client/`).
 
-**Guía rápida Fase 2 (BD, seed, 2 terminales, pruebas):** [DESIGN_FASE2_PASOS_PRUEBA.md](./DESIGN_FASE2_PASOS_PRUEBA.md)
-
 ## Requisitos
 
 - Node.js 18+
-- MySQL con la base `design_comunicados` y usuario `design_app` (ver `DESIGN_SPRINT1_PASOS_PREPARACION.md` en la raíz del proyecto ABCLOGISTICA).
+- MySQL (local o Railway; variables en `.env.example`).
 
 ## Instalación (ya hecho si seguiste la preparación)
 
@@ -89,14 +87,8 @@ curl -X POST http://localhost:4000/api/componer \
     },
     "datos": { "titulo": "Mi primer comunicado" },
     "formato": "png"
-  }' --output comunicado.png
+  }' --output /tmp/comunicado.png
 ```
-
-Abre `comunicado.png` para ver el resultado.
-
-## Formato de plantillas
-
-Ver [docs/FORMATO_PLANTILLA.md](docs/FORMATO_PLANTILLA.md).
 
 ## Auth
 
