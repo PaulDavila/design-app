@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/db');
 const { createSmtpTransport } = require('../lib/smtpTransport');
+const { isResendEnabled, sendViaResend } = require('../lib/resendSend');
 const {
   buildEmail1Html,
   buildNewsletterHtml,
@@ -35,8 +36,6 @@ async function sendEmail1Message(opts) {
     throw new Error(r.error);
   }
 
-  const transporter = getTransport();
-
   const baseMail = {
     from,
     subject,
@@ -60,6 +59,20 @@ async function sendEmail1Message(opts) {
     }
   }
 
+  if (isResendEnabled()) {
+    const resendOpts = { subject, html, attachments };
+    if (r.mode === 'broadcast') {
+      resendOpts.to = [broadcast];
+    } else if (r.emails.length === 1) {
+      resendOpts.to = [r.emails[0]];
+    } else {
+      resendOpts.to = [r.emails[0]];
+      resendOpts.bcc = r.emails.slice(1);
+    }
+    return sendViaResend(resendOpts);
+  }
+
+  const transporter = getTransport();
   return transporter.sendMail(mailOptions);
 }
 

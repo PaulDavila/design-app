@@ -1,6 +1,9 @@
 /**
  * Prueba conexión SMTP desde el mismo entorno que el servidor (ideal: railway ssh → npm run test:smtp).
  * No envía correo; solo verify() TCP+TLS+auth.
+ *
+ * Railway Free/Trial/Hobby: SMTP saliente está DESHABILITADO (documentación Railway).
+ * Ahí debes usar RESEND_API_KEY + npm run test:resend (API HTTPS).
  */
 require('dotenv').config();
 const { createSmtpTransport } = require('../lib/smtpTransport');
