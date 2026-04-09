@@ -15,7 +15,8 @@
     "migrate:email-envio-smtp": "node scripts/apply-migration-email-envio-smtp.js",
     "migrate:plantilla-reconocimientos": "node scripts/apply-migrate-plantilla-reconocimientos.js",
     "client": "npm run dev --prefix client",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:smtp": "node scripts/test-smtp.js"
   },
   "keywords": [],
   "author": "",

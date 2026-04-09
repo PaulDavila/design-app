@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const nodemailer = require('nodemailer');
 const { pool } = require('../config/db');
+const { createSmtpTransport } = require('../lib/smtpTransport');
 const {
   buildEmail1Html,
   buildNewsletterHtml,
@@ -19,23 +19,7 @@ const CID_LOGO = 'email1-logo@abclogistica';
 const CID_GEMINI = 'email1-gemini@abclogistica';
 
 function getTransport() {
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT, 10) || 587;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!user || !pass) {
-    throw new Error('Configura SMTP_USER y SMTP_PASS en .env para enviar correos');
-  }
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-    // Sin esto, un SMTP inalcanzable deja /completar en "pending" minutos (default ~2 min conexión).
-    connectionTimeout: 20_000,
-    greetingTimeout: 15_000,
-    socketTimeout: 90_000,
-  });
+  return createSmtpTransport();
 }
 
 /**
