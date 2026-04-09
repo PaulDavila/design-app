@@ -4,6 +4,7 @@
  */
 const mysql = require('mysql2/promise');
 const { resolveDbConfig } = require('../config/db');
+const { ensureUsers123 } = require('./ensure-users-123');
 
 const BASE = 'bases/base.png';
 const THUMB = 'miniaturas/miniaturas.png';
@@ -248,16 +249,7 @@ async function main() {
       ]);
     }
 
-    // Usuario 1 para X-User-Id: ON DUPLICATE KEY evita fila fantasma si id=1 ya existe;
-    // si otro id tenía el mismo email, INSERT fallaría — ejecutar npm run ensure:demo-user en ese caso.
-    await conn.query(
-      `INSERT INTO users (id, email, nombre, role, activo)
-       VALUES (1, 'demo@design.local', 'Usuario demo', 'user', 1)
-       ON DUPLICATE KEY UPDATE
-         nombre = VALUES(nombre),
-         email = VALUES(email),
-         activo = VALUES(activo)`
-    );
+    await ensureUsers123(conn);
 
     console.log(`Insertadas ${rows.length} plantillas (id_externo opacos tpl_000001…).`);
   } finally {

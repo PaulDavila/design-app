@@ -8,6 +8,7 @@
     "dev": "node index.js",
     "db:schema": "node scripts/apply-schema.js",
     "ensure:demo-user": "node scripts/ensure-demo-user.js",
+    "ensure:users-123": "node scripts/ensure-users-123.js",
     "seed": "node scripts/seed-fase2.js",
     "migrate:email-estado": "node scripts/apply-migration-email-estado-programado.js",
     "migrate:users-role": "node scripts/apply-migration-users-role-administrativo.js",

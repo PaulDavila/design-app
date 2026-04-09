@@ -1,35 +1,22 @@
 /**
- * Garantiza users.id=1 para X-User-Id / VITE_USER_ID por defecto.
- * INSERT IGNORE puede no crear la fila si otro id ya usa el mismo email.
- * Uso: npm run ensure:demo-user  (Railway Shell o local)
+ * Alias: ahora asegura usuarios 1, 2 y 3 (igual que npm run ensure:users-123).
+ * Uso: npm run ensure:demo-user
  */
 const mysql = require('mysql2/promise');
 const { resolveDbConfig } = require('../config/db');
+const { ensureUsers123 } = require('./ensure-users-123');
 
 async function main() {
   const conn = await mysql.createConnection(resolveDbConfig());
   try {
-    await conn.query(
-      `INSERT INTO users (id, email, nombre, role, activo)
-       VALUES (1, 'demo@design.local', 'Usuario demo', 'user', 1)
-       ON DUPLICATE KEY UPDATE
-         nombre = VALUES(nombre),
-         email = VALUES(email),
-         role = VALUES(role),
-         activo = VALUES(activo)`
+    await ensureUsers123(conn);
+    const [rows] = await conn.query(
+      'SELECT id, email, role FROM users WHERE id IN (1,2,3) ORDER BY id'
     );
-    const [rows] = await conn.query('SELECT id, email, role FROM users WHERE id = 1');
-    console.log('OK: usuario demo para API:', rows[0]);
+    console.log('OK (usuarios 1–3):');
+    console.table(rows);
   } catch (err) {
-    if (String(err.message).includes('Duplicate entry') && String(err.message).includes('uk_email')) {
-      console.error(
-        'Error: el email demo@design.local ya está en otro users.id. Actualiza ese email en MySQL o borra la fila conflictiva, luego vuelve a ejecutar este script.'
-      );
-      console.error(err.message);
-      process.exitCode = 1;
-      return;
-    }
-    console.error(err);
+    console.error(err.message);
     process.exitCode = 1;
   } finally {
     await conn.end();
