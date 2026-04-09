@@ -2,8 +2,8 @@
  * Rellena 17 plantillas: emails, newsletter (1), redes (3 carrusel + 1 imagen + 6 portadas).
  * npm run seed
  */
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const mysql = require('mysql2/promise');
+const { resolveDbConfig } = require('../config/db');
 
 const BASE = 'bases/base.png';
 const THUMB = 'miniaturas/miniaturas.png';
@@ -213,11 +213,7 @@ function buildRows() {
 
 async function main() {
   const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT, 10) || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    ...resolveDbConfig(),
     multipleStatements: true,
   });
 

@@ -6,6 +6,7 @@
     "start": "node index.js",
     "build": "node -v && npm -v && rm -rf client/node_modules && NPM_CONFIG_PRODUCTION=false npm install --no-package-lock --prefix client && node scripts/ensure-rolldown-linux-binding.cjs && npm run build --prefix client",
     "dev": "node index.js",
+    "db:schema": "node scripts/apply-schema.js",
     "seed": "node scripts/seed-fase2.js",
     "migrate:email-estado": "node scripts/apply-migration-email-estado-programado.js",
     "migrate:users-role": "node scripts/apply-migration-users-role-administrativo.js",

@@ -2,8 +2,8 @@
  * Inserta la plantilla Reconocimientos si no existe (BD sembrada antes de añadirla al seed).
  * Uso: desde design-app/ → npm run migrate:plantilla-reconocimientos
  */
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const mysql = require('mysql2/promise');
+const { resolveDbConfig } = require('../config/db');
 
 const ID_EXTERNO = 'tpl_reconocimientos_1';
 const BASE = 'bases/base.png';
@@ -16,13 +16,7 @@ function def600x1200() {
 }
 
 async function main() {
-  const conn = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT, 10) || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  const conn = await mysql.createConnection(resolveDbConfig());
   try {
     const [rows] = await conn.query(
       `SELECT id FROM plantillas

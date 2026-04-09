@@ -2,17 +2,11 @@
  * Añade enviado_en y error_envio a email_envios_solicitud.
  * Uso: desde design-app/ → npm run migrate:email-envio-smtp
  */
-require('dotenv').config();
 const mysql = require('mysql2/promise');
+const { resolveDbConfig } = require('../config/db');
 
 async function main() {
-  const conn = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT, 10) || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  const conn = await mysql.createConnection(resolveDbConfig());
   try {
     await conn.query(`
       ALTER TABLE email_envios_solicitud
