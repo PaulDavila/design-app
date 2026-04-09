@@ -248,9 +248,15 @@ async function main() {
       ]);
     }
 
-    // Usuario de prueba para favoritos (auth Opción A)
+    // Usuario 1 para X-User-Id: ON DUPLICATE KEY evita fila fantasma si id=1 ya existe;
+    // si otro id tenía el mismo email, INSERT fallaría — ejecutar npm run ensure:demo-user en ese caso.
     await conn.query(
-      `INSERT IGNORE INTO users (id, email, nombre) VALUES (1, 'demo@design.local', 'Usuario demo')`
+      `INSERT INTO users (id, email, nombre, role, activo)
+       VALUES (1, 'demo@design.local', 'Usuario demo', 'user', 1)
+       ON DUPLICATE KEY UPDATE
+         nombre = VALUES(nombre),
+         email = VALUES(email),
+         activo = VALUES(activo)`
     );
 
     console.log(`Insertadas ${rows.length} plantillas (id_externo opacos tpl_000001…).`);

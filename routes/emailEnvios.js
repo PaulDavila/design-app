@@ -128,6 +128,29 @@ router.post('/', async (req, res) => {
     if (!mysqlStr) {
       return res.status(400).json({ error: 'fecha_hora_programada no válida' });
     }
+
+    const [userRows] = await pool.query('SELECT id, email FROM users WHERE id = ?', [userId]);
+    if (!userRows[0]) {
+      const [cRows] = await pool.query('SELECT COUNT(*) AS n FROM users');
+      return res.status(400).json({
+        error: `No existe users.id=${userId} (cabecera X-User-Id). El client envía el id del build (VITE_USER_ID o ?e1_uid=).`,
+        hint:
+          'En Railway Shell: `npm run ensure:demo-user` o `npm run seed`. Si usaste seed antes, a veces INSERT IGNORE no crea el id 1 si el email demo@design.local ya estaba en otro id.',
+        xUserId: userId,
+        usersEnBd: Number(cRows[0]?.n ?? 0),
+      });
+    }
+    const [plRows] = await pool.query('SELECT id FROM plantillas WHERE id = ?', [plantilla_id]);
+    if (!plRows[0]) {
+      const [pCountRows] = await pool.query('SELECT COUNT(*) AS n FROM plantillas');
+      return res.status(400).json({
+        error: `No existe plantillas.id=${plantilla_id}.`,
+        hint: 'Recarga el inicio del catálogo o ejecuta `npm run seed` en el servidor.',
+        plantilla_id,
+        plantillasEnBd: Number(pCountRows[0]?.n ?? 0),
+      });
+    }
+
     const [r] = await pool.query(
       `INSERT INTO email_envios_solicitud
         (plantilla_id, creado_por_user_id, editor_tipo, payload, enviar_todos, destinatarios, fecha_hora_programada, estado)
@@ -151,9 +174,10 @@ router.post('/', async (req, res) => {
     if (err.errno === 1452 || err.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(400).json({
         error:
-          'Usuario o plantilla no reconocidos en la base de datos. Comprueba que exista users.id igual a X-User-Id (y la plantilla). En Railway suele fallar si VITE_USER_ID apunta a un id que no creaste (el seed suele usar el usuario 1).',
+          'Clave foránea: usuario o plantilla no reconocidos (detalle en dbMessage).',
         dbErrno: err.errno,
         dbCode: err.code,
+        dbMessage: err.sqlMessage ? String(err.sqlMessage).slice(0, 400) : undefined,
       });
     }
     res.status(500).json({

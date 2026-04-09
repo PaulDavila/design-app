@@ -283,7 +283,11 @@ export default function Email1Editor({
         data = { error: txt || res.statusText }
       }
       if (!res.ok) {
-        const msg = typeof data?.error === 'string' ? data.error : txt || res.statusText
+        let msg = typeof data?.error === 'string' ? data.error : txt || res.statusText
+        if (data?.hint) msg += ` ${data.hint}`
+        if (data?.dbMessage) msg += ` (${data.dbMessage})`
+        if (data?.usersEnBd != null) msg += ` [users en BD: ${data.usersEnBd}]`
+        if (data?.plantillasEnBd != null) msg += ` [plantillas en BD: ${data.plantillasEnBd}]`
         throw new Error(msg)
       }
       return data
