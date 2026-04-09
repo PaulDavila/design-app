@@ -41,8 +41,8 @@ async function rasterizeGeminiBufferForEmail(inputBuffer, opts) {
   const rotated = sharp(inputBuffer).rotate();
 
   if (s >= 1) {
-    const outW = Math.round(W * s);
-    const outH = Math.round(H * s);
+    const outW = Math.max(1, Math.round(W * s));
+    const outH = Math.max(1, Math.round((outW * H) / W));
     const resized = await rotated.resize(outW, outH, { fit: 'cover', position: 'centre' }).toBuffer();
     const meta = await sharp(resized).metadata();
     const w0 = meta.width || outW;
@@ -58,7 +58,8 @@ async function rasterizeGeminiBufferForEmail(inputBuffer, opts) {
 
   const covered = await rotated.resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
   const smallW = Math.max(1, Math.round(W * s));
-  const smallH = Math.max(1, Math.round(H * s));
+  /** Misma relación W:H que el lienzo; redondear ambos por separado rompe el ratio y fill estira la imagen. */
+  const smallH = Math.max(1, Math.round((smallW * H) / W));
   const scaled = await sharp(covered).resize(smallW, smallH, { fit: 'fill' }).toBuffer();
   const left = Math.floor((W - smallW) / 2);
   const top = Math.floor((H - smallH) / 2);
@@ -88,7 +89,6 @@ async function fetchImageBufferFromUrl(urlStr) {
   const res = await fetch(urlStr, {
     redirect: 'follow',
     headers: { Accept: 'image/*,*/*' },
-    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     throw new Error(`No se pudo descargar la imagen (${res.status})`);

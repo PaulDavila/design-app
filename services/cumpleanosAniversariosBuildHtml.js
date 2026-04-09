@@ -203,17 +203,19 @@ function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
         ? escapeAttr(String(t.imagenTarjetaUrl).trim())
         : '';
 
+      /** Sin height en la etiqueta: muchos webmails ignoran object-fit y estiran si width+height fijan otro ratio. */
       const imgBlock = src
-        ? `<img src="${src}" alt="" width="${RECO_IMG_W}" height="${RECO_IMG_H}" style="display:block;width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;max-width:${RECO_IMG_W}px;border:0;line-height:0;outline:none;text-decoration:none;object-fit:cover;" />`
+        ? `<img src="${src}" alt="" width="${RECO_IMG_W}" style="display:block;width:${RECO_IMG_W}px;max-width:${RECO_IMG_W}px;height:auto;max-height:${RECO_IMG_H}px;border:0;line-height:0;outline:none;text-decoration:none;object-fit:cover;vertical-align:top;" />`
         : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:#ffffff;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
+      /** Borde 1px: Gmail/Outlook suelen ignorar box-shadow en tablas; el borde siempre delimita la tarjeta. */
       return `
-<table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;margin:0 auto 16px auto;border:0;border-radius:12px;background:#ffffff;box-shadow:${boxShadow};-webkit-box-shadow:${boxShadow};mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
+<table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;margin:0 auto 16px auto;border:1px solid ${ACCENT_HEX};border-radius:12px;background:#ffffff;box-shadow:${boxShadow};-webkit-box-shadow:${boxShadow};mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
   <tr>
-    <td width="${RECO_COL_IMG}" valign="top" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:top;background:#ffffff;">
+    <td width="${RECO_COL_IMG}" valign="middle" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background:#ffffff;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
         <tr>
-          <td align="center" valign="top" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;">
+          <td align="center" valign="middle" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${RECO_IMG_W}px;">
             ${imgBlock}
           </td>
         </tr>
