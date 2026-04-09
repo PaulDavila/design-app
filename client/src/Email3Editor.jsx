@@ -116,17 +116,17 @@ export default function Email3Editor({
   plantilla,
   userId = 1,
   role: roleProp = 'user',
+  forceSelfSchedule = false,
   bootstrapSolicitudId = null,
   bootstrapAutoPrintPdf = false,
   onBootstrapSolicitudDone,
   onVolverAlInicio,
 }) {
-  const {
-    userId: effectiveUserId,
-    role: effectiveRole,
-    canSelfSchedule: effectiveCanSelfSchedule,
-    fromUrl: identityFromUrl,
-  } = readEmail1IdentityFromSearch(userId, roleProp)
+  const idn = readEmail1IdentityFromSearch(userId, roleProp)
+  const effectiveCanSelfSchedule = Boolean(forceSelfSchedule) || idn.canSelfSchedule
+  const effectiveUserId = idn.userId
+  const effectiveRole = idn.role
+  const identityFromUrl = idn.fromUrl
 
   const [step, setStep] = useState('edit')
   const [asuntoCorreo, setAsuntoCorreo] = useState('')

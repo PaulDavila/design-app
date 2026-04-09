@@ -163,7 +163,13 @@ function buildAniversariosTableHtml(tarjetas) {
 </table>`;
 }
 
-/** Tarjeta Reconocimientos: 30% imagen 4:5 + 70% título / área / texto (solo reconocimientos_1). */
+/** Tarjeta Reconocimientos: imagen 4:5 + texto — tablas con anchos en px (Outlook/Gmail ignoran % en muchas celdas). */
+const RECO_CARD_OUTER_W = 552;
+const RECO_IMG_W = 148;
+const RECO_IMG_H = 185;
+const RECO_COL_IMG = 168;
+const RECO_COL_TXT = RECO_CARD_OUTER_W - RECO_COL_IMG;
+
 function buildReconocimientosCardsHtml(tarjetas) {
   const list = Array.isArray(tarjetas) ? tarjetas : [];
   const RECO = '#003b49';
@@ -180,27 +186,27 @@ function buildReconocimientosCardsHtml(tarjetas) {
         : '';
 
       const imgBlock = src
-        ? `<img src="${src}" alt="" width="148" height="185" style="display:block;width:100%;max-width:148px;height:185px;object-fit:cover;border:0;background:#ffffff;" />`
-        : `<div style="width:100%;max-width:148px;height:185px;background:#ffffff;line-height:185px;font-size:0;">&nbsp;</div>`;
+        ? `<img src="${src}" alt="" width="${RECO_IMG_W}" height="${RECO_IMG_H}" style="display:block;width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;max-width:${RECO_IMG_W}px;border:0;line-height:0;outline:none;text-decoration:none;object-fit:cover;" />`
+        : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:#ffffff;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
       return `
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;margin:0 0 16px 0;border:1px solid ${ACCENT_HEX};border-radius:12px;background:#ffffff;overflow:hidden;">
+<table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;margin:0 auto 16px auto;border:1px solid ${ACCENT_HEX};border-radius:12px;background:#ffffff;mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
   <tr>
-    <td width="30%" valign="top" style="width:30%;padding:10px;background:#ffffff;border:0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;">
+    <td width="${RECO_COL_IMG}" valign="top" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:top;background:#ffffff;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
         <tr>
-          <td align="center" style="padding:0;background:#ffffff;line-height:0;font-size:0;border:0;">
+          <td align="center" valign="top" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;">
             ${imgBlock}
           </td>
         </tr>
       </table>
     </td>
-    <td width="70%" valign="top" style="width:70%;padding:10px;background:#ffffff;border:0;">
-      <div style="width:100%;font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;">${titulo || '&nbsp;'}</div>
-      <div style="height:1px;line-height:1px;font-size:1px;">&nbsp;</div>
-      <div style="width:100%;font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;">${areaTxt || '&nbsp;'}</div>
-      <div style="height:15px;line-height:15px;font-size:1px;">&nbsp;</div>
-      <div style="width:100%;font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;">${cuerpoHtml || '&nbsp;'}</div>
+    <td width="${RECO_COL_TXT}" valign="top" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background:#ffffff;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+        <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;padding:0 0 4px 0;">${titulo || '&nbsp;'}</td></tr>
+        <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;padding:0 0 12px 0;">${areaTxt || '&nbsp;'}</td></tr>
+        <tr><td style="font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;padding:0;">${cuerpoHtml || '&nbsp;'}</td></tr>
+      </table>
     </td>
   </tr>
 </table>`;

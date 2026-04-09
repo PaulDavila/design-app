@@ -392,6 +392,7 @@ export default function App() {
       const boot = {
         solicitudId,
         autoPrintPdf: Boolean(options?.autoPrintPdf),
+        forceSelfSchedule: Boolean(options?.forceSelfScheduleFromPanel),
       }
       const tipo = options.editor_tipo
 
@@ -766,6 +767,7 @@ export default function App() {
             plantilla={plantillaEmail1}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(email1OpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={email1OpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={email1OpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleEmail1BootstrapDone}
@@ -778,6 +780,7 @@ export default function App() {
             plantilla={plantillaNewsletter1}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(newsletterOpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={newsletterOpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={newsletterOpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleNewsletterBootstrapDone}
@@ -790,6 +793,7 @@ export default function App() {
             plantilla={plantillaEmail2}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(email2OpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={email2OpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={email2OpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleEmail2BootstrapDone}
@@ -802,6 +806,7 @@ export default function App() {
             plantilla={plantillaEmail3}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(email3OpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={email3OpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={email3OpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleEmail3BootstrapDone}
@@ -814,6 +819,7 @@ export default function App() {
             plantilla={plantillaEmail4}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(email4OpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={email4OpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={email4OpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleEmail4BootstrapDone}
@@ -825,6 +831,7 @@ export default function App() {
             plantilla={plantillaCumpleanos1}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(cumpleanosOpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={cumpleanosOpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={cumpleanosOpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleCumpleanosBootstrapDone}
@@ -836,6 +843,7 @@ export default function App() {
             plantilla={plantillaAniversarios1}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(aniversariosOpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={aniversariosOpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={aniversariosOpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleAniversariosBootstrapDone}
@@ -847,6 +855,7 @@ export default function App() {
             plantilla={plantillaReconocimientos1}
             userId={email1UserId}
             role={email1Role}
+            forceSelfSchedule={Boolean(reconocimientosOpenFromHome?.forceSelfSchedule)}
             bootstrapSolicitudId={reconocimientosOpenFromHome?.solicitudId ?? null}
             bootstrapAutoPrintPdf={reconocimientosOpenFromHome?.autoPrintPdf ?? false}
             onBootstrapSolicitudDone={handleReconocimientosBootstrapDone}

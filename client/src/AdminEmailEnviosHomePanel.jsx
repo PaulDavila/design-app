@@ -181,7 +181,12 @@ export default function AdminEmailEnviosHomePanel({ userId, viewerRole = 'user',
     setBusyId(s.id)
     setError('')
     try {
-      await onAbrirEnEditor(s.id, s.plantilla_id, { ...options, editor_tipo: s.editor_tipo })
+      await onAbrirEnEditor(s.id, s.plantilla_id, {
+        ...options,
+        editor_tipo: s.editor_tipo,
+        forceSelfScheduleFromPanel:
+          viewerRole === 'admin' || viewerRole === 'administrativo',
+      })
       void loadSolicitudes()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo abrir el editor')

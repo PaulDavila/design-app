@@ -14,6 +14,63 @@ const { sendEmail1Message, buildLogoAttachmentAndSrc } = require('./email1Send')
 const CID_HERO = 'cumple-hero@abclogistica';
 
 const HERO_WHITE = '#ffffff';
+const RECO_CARD_W = 148;
+const RECO_CARD_H = 185;
+
+/**
+ * Incrusta cada foto de tarjeta como CID (URLs externas caducan o los clientes bloquean el layout).
+ * @param {object} payload
+ * @returns {Promise<{ payload: object, attachments: object[] }>}
+ */
+async function embedReconocimientosCardImages(payload) {
+  const tabla = Array.isArray(payload?.tablaTarjetas) ? payload.tablaTarjetas : [];
+  if (!tabla.length) {
+    return { payload, attachments: [] };
+  }
+  const outTarjetas = [];
+  const extra = [];
+  for (let i = 0; i < tabla.length; i += 1) {
+    const t = tabla[i];
+    const raw = typeof t?.imagenTarjetaUrl === 'string' ? t.imagenTarjetaUrl.trim() : '';
+    let imagenTarjetaUrl = t.imagenTarjetaUrl;
+    if (raw && !raw.startsWith('cid:')) {
+      const cid = `reco-card-${i}@abclogistica`;
+      try {
+        let inputBuffer = null;
+        if (raw.startsWith('data:')) {
+          const parsed = parseDataUriForEmail(raw);
+          if (parsed) inputBuffer = parsed.buffer;
+        } else if (raw.startsWith('https://') || raw.startsWith('http://')) {
+          inputBuffer = await fetchImageBufferFromUrl(raw);
+        }
+        if (inputBuffer) {
+          const pct = Number.isFinite(Number(t?.imagenTarjetaSizePct)) ? Number(t.imagenTarjetaSizePct) : 100;
+          const jpegBuf = await rasterizeGeminiBufferForEmail(inputBuffer, {
+            imgBoxIdx: 0,
+            imagenGeminiSizePct: pct,
+            targetW: RECO_CARD_W,
+            targetH: RECO_CARD_H,
+            backgroundHexOverride: HERO_WHITE,
+          });
+          extra.push({
+            filename: `reco-card-${i}.jpg`,
+            content: jpegBuf,
+            contentType: 'image/jpeg',
+            cid,
+          });
+          imagenTarjetaUrl = `cid:${cid}`;
+        }
+      } catch (e) {
+        console.error(`Reconocimientos tarjeta ${i} (imagen):`, e);
+      }
+    }
+    outTarjetas.push({ ...t, imagenTarjetaUrl });
+  }
+  return {
+    payload: { ...payload, tablaTarjetas: outTarjetas },
+    attachments: extra,
+  };
+}
 
 /**
  * @param {'cumpleanos_1' | 'aniversarios_1' | 'reconocimientos_1'} editorTipo
@@ -89,10 +146,18 @@ async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
     console.error('Iconos pie cumpleaños (CID):', e);
   }
 
-  const allAttachments = [...logoAtt, ...attachments, ...socialAtt];
+  let payloadForHtml = payload;
+  let cardAtt = [];
+  if (editorTipo === 'reconocimientos_1') {
+    const emb = await embedReconocimientosCardImages(payload);
+    payloadForHtml = emb.payload;
+    cardAtt = emb.attachments;
+  }
+
+  const allAttachments = [...logoAtt, ...attachments, ...cardAtt, ...socialAtt];
 
   const html = buildCumpleanosFamilyHtml(editorTipo, {
-    payload,
+    payload: payloadForHtml,
     logoImgSrc,
     heroImage,
     socialImgSrcById,

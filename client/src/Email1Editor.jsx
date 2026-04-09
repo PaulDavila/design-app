@@ -136,6 +136,7 @@ export default function Email1Editor({
   variant = 'email1',
   userId = 1,
   role: roleProp = 'user',
+  forceSelfSchedule = false,
   bootstrapSolicitudId = null,
   bootstrapAutoPrintPdf = false,
   onBootstrapSolicitudDone,
@@ -143,12 +144,11 @@ export default function Email1Editor({
 }) {
   const editorTipoApi = variant === 'newsletter' ? 'newsletter_1' : 'email1'
   const editorHeading = variant === 'newsletter' ? 'Newsletter' : 'Email 1'
-  const {
-    userId: effectiveUserId,
-    role: effectiveRole,
-    canSelfSchedule: effectiveCanSelfSchedule,
-    fromUrl: identityFromUrl,
-  } = readEmail1IdentityFromSearch(userId, roleProp)
+  const idn = readEmail1IdentityFromSearch(userId, roleProp)
+  const effectiveCanSelfSchedule = Boolean(forceSelfSchedule) || idn.canSelfSchedule
+  const effectiveUserId = idn.userId
+  const effectiveRole = idn.role
+  const identityFromUrl = idn.fromUrl
 
   const [step, setStep] = useState('edit')
   const [asuntoCorreo, setAsuntoCorreo] = useState('')
