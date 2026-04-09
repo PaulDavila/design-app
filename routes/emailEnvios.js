@@ -147,6 +147,13 @@ router.post('/', async (req, res) => {
     res.status(201).json(rowToApi(rows[0]));
   } catch (err) {
     console.error('POST /api/email-envios:', err);
+    // FK: creado_por_user_id → users, plantilla_id → plantillas (p. ej. VITE_USER_ID ≠ users.id en prod)
+    if (err.errno === 1452 || err.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({
+        error:
+          'Usuario o plantilla no reconocidos en la base de datos. Comprueba que exista users.id igual a X-User-Id (y la plantilla). En Railway suele fallar si VITE_USER_ID apunta a un id que no creaste (el seed suele usar el usuario 1).',
+      });
+    }
     res.status(500).json({ error: 'No se pudo crear la solicitud' });
   }
 });
