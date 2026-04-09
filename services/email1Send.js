@@ -31,6 +31,10 @@ function getTransport() {
     port,
     secure: port === 465,
     auth: { user, pass },
+    // Sin esto, un SMTP inalcanzable deja /completar en "pending" minutos (default ~2 min conexión).
+    connectionTimeout: 20_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 90_000,
   });
 }
 

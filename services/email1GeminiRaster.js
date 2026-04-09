@@ -88,6 +88,7 @@ async function fetchImageBufferFromUrl(urlStr) {
   const res = await fetch(urlStr, {
     redirect: 'follow',
     headers: { Accept: 'image/*,*/*' },
+    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     throw new Error(`No se pudo descargar la imagen (${res.status})`);
