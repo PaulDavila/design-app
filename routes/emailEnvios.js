@@ -152,9 +152,16 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         error:
           'Usuario o plantilla no reconocidos en la base de datos. Comprueba que exista users.id igual a X-User-Id (y la plantilla). En Railway suele fallar si VITE_USER_ID apunta a un id que no creaste (el seed suele usar el usuario 1).',
+        dbErrno: err.errno,
+        dbCode: err.code,
       });
     }
-    res.status(500).json({ error: 'No se pudo crear la solicitud' });
+    res.status(500).json({
+      error: 'No se pudo crear la solicitud',
+      dbErrno: err.errno,
+      dbCode: err.code,
+      dbMessage: err.sqlMessage ? String(err.sqlMessage).slice(0, 240) : undefined,
+    });
   }
 });
 

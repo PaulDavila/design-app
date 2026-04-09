@@ -72,9 +72,18 @@ const API_BASE =
 
 const DEMO_USER_ID = 1
 
-/** Email 1: `client/.env.local` → VITE_USER_ID, VITE_USER_ROLE=user|admin|administrativo */
-const EMAIL1_USER_ID = parseInt(import.meta.env.VITE_USER_ID || String(DEMO_USER_ID), 10)
-const EMAIL1_ENV_ROLE = import.meta.env.VITE_USER_ROLE || 'user'
+/** Email 1: `VITE_USER_ID` / `VITE_USER_ROLE` (build-time). Si el valor en Railway tiene espacios o es inválido, parseInt da NaN y el API falla. */
+const _rawUid = String(import.meta.env.VITE_USER_ID ?? '')
+  .trim()
+  .replace(/^["']|["']$/g, '')
+const _parsedUid = parseInt(_rawUid || String(DEMO_USER_ID), 10)
+const EMAIL1_USER_ID =
+  Number.isFinite(_parsedUid) && _parsedUid > 0 ? _parsedUid : DEMO_USER_ID
+
+const _rawRole = String(import.meta.env.VITE_USER_ROLE ?? 'user')
+  .trim()
+  .toLowerCase()
+const EMAIL1_ENV_ROLE = ['user', 'admin', 'administrativo'].includes(_rawRole) ? _rawRole : 'user'
 
 function thumbUrl(rutaMiniatura) {
   if (!rutaMiniatura) return ''
