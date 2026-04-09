@@ -208,25 +208,33 @@ function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
         ? `<img src="${src}" alt="" width="${RECO_IMG_W}" style="display:block;width:${RECO_IMG_W}px;max-width:${RECO_IMG_W}px;height:auto;max-height:${RECO_IMG_H}px;border:0;line-height:0;outline:none;text-decoration:none;object-fit:cover;vertical-align:top;" />`
         : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:#ffffff;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
-      /** Borde 1px: Gmail/Outlook suelen ignorar box-shadow en tablas; el borde siempre delimita la tarjeta. */
+      /** Sin borde: sombra en div (mejor soporte que en table); la franja #f1f5f9 en el padre da contraste blanco vs fondo. */
       return `
-<table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;margin:0 auto 16px auto;border:1px solid ${ACCENT_HEX};border-radius:12px;background:#ffffff;box-shadow:${boxShadow};-webkit-box-shadow:${boxShadow};mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
   <tr>
-    <td width="${RECO_COL_IMG}" valign="middle" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background:#ffffff;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
-        <tr>
-          <td align="center" valign="middle" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${RECO_IMG_W}px;">
-            ${imgBlock}
-          </td>
-        </tr>
-      </table>
-    </td>
-    <td width="${RECO_COL_TXT}" valign="top" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background:#ffffff;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
-        <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;padding:0 0 4px 0;">${titulo || '&nbsp;'}</td></tr>
-        <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;padding:0 0 12px 0;">${areaTxt || '&nbsp;'}</td></tr>
-        <tr><td style="font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;padding:0;">${cuerpoHtml || '&nbsp;'}</td></tr>
-      </table>
+    <td align="center" style="padding:0 0 16px 0;">
+      <div style="display:inline-block;width:100%;max-width:${RECO_CARD_OUTER_W}px;margin:0;border:0;border-radius:12px;background:#ffffff;overflow:hidden;box-sizing:border-box;box-shadow:${boxShadow};-webkit-box-shadow:${boxShadow};text-align:left;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;border:0;background:#ffffff;mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
+          <tr>
+            <td width="${RECO_COL_IMG}" valign="middle" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background:#ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+                <tr>
+                  <td align="center" valign="middle" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${RECO_IMG_W}px;">
+                    ${imgBlock}
+                  </td>
+                </tr>
+              </table>
+            </td>
+            <td width="${RECO_COL_TXT}" valign="top" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background:#ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+                <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;padding:0 0 4px 0;">${titulo || '&nbsp;'}</td></tr>
+                <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;padding:0 0 12px 0;">${areaTxt || '&nbsp;'}</td></tr>
+                <tr><td style="font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;padding:0;">${cuerpoHtml || '&nbsp;'}</td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
     </td>
   </tr>
 </table>`;
@@ -334,6 +342,12 @@ function buildCumpleanosFamilyHtml(editorTipo, { payload, logoImgSrc, heroImage,
       ? `<img src="${escapeAttr(logoImgSrc)}" alt="ABC Logística" height="52" style="display:block;height:52px;max-height:52px;width:auto;max-width:290px;margin:0 auto;" />`
       : '<span style="font-size:18px;font-weight:bold;color:#003b49;">ABC Logística</span>';
 
+  /** Reconocimientos: franja gris muy suave para que la tarjeta blanca (sin borde) se distinga del cuerpo blanco del correo. */
+  const tablaRowTdStyle =
+    editorTipo === 'reconocimientos_1'
+      ? 'padding:16px 24px 20px;border:0;background-color:#f1f5f9;'
+      : 'padding:0 24px 16px;border:0;';
+
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -357,7 +371,7 @@ function buildCumpleanosFamilyHtml(editorTipo, { payload, logoImgSrc, heroImage,
           <tr><td style="padding:0 24px 16px;border:0;">
             <div style="max-width:90%;margin:0 auto;">${heroBlock}</div>
           </td></tr>
-          <tr><td style="padding:0 24px 16px;border:0;">${tablaHtml}</td></tr>
+          <tr><td style="${tablaRowTdStyle}">${tablaHtml}</td></tr>
           <tr>
             <td style="border-top:1px solid ${borderColor};background-color:#f8fafc;padding:16px 24px;">
               ${showFoot ? `<div style="${textStyleSmall}">${injectLinkStyle(footer, linkStyle)}</div>` : ''}
