@@ -27,6 +27,23 @@ function escapeAttr(s) {
     .replace(/</g, '&lt;');
 }
 
+/** Igual que client/src/Cumpleanos1Editor.jsx — sombra de tarjeta Reconocimientos según fondo del correo. */
+function rgbaFromHex(hex, alpha) {
+  const h = String(hex || '').replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
+    return `rgba(15, 23, 42, ${alpha})`;
+  }
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function recoTarjetaBoxShadow(fondoCorreoHex) {
+  const hex = typeof fondoCorreoHex === 'string' && fondoCorreoHex ? fondoCorreoHex : FONDO_CORREO_HEX[0];
+  return `0 2px 8px ${rgbaFromHex(hex, 0.845)}, 0 1px 3px ${rgbaFromHex(hex, 0.473)}`;
+}
+
 function injectLinkStyle(fragment, linkStyle) {
   return fragment.replace(/<a\s+/gi, `<a style="${linkStyle}" `);
 }
@@ -170,10 +187,11 @@ const RECO_IMG_H = 185;
 const RECO_COL_IMG = 168;
 const RECO_COL_TXT = RECO_CARD_OUTER_W - RECO_COL_IMG;
 
-function buildReconocimientosCardsHtml(tarjetas) {
+function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
   const list = Array.isArray(tarjetas) ? tarjetas : [];
   const RECO = '#003b49';
   const linkStyle = 'color:#7c3aed;';
+  const boxShadow = recoTarjetaBoxShadow(fondoCorreoHex);
 
   const cardBlocks = list
     .map((t) => {
@@ -190,7 +208,7 @@ function buildReconocimientosCardsHtml(tarjetas) {
         : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:#ffffff;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
       return `
-<table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;margin:0 auto 16px auto;border:1px solid ${ACCENT_HEX};border-radius:12px;background:#ffffff;mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
+<table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;margin:0 auto 16px auto;border:0;border-radius:12px;background:#ffffff;box-shadow:${boxShadow};-webkit-box-shadow:${boxShadow};mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
   <tr>
     <td width="${RECO_COL_IMG}" valign="top" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:top;background:#ffffff;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
@@ -288,7 +306,7 @@ function buildCumpleanosFamilyHtml(editorTipo, { payload, logoImgSrc, heroImage,
   const tarjetas = Array.isArray(payload?.tablaTarjetas) ? payload.tablaTarjetas : [];
   const tablaHtml =
     editorTipo === 'reconocimientos_1'
-      ? buildReconocimientosCardsHtml(tarjetas)
+      ? buildReconocimientosCardsHtml(tarjetas, fondoCorreo)
       : editorTipo === 'aniversarios_1'
         ? buildAniversariosTableHtml(tarjetas)
         : buildCumpleanosTableHtml(tarjetas);
