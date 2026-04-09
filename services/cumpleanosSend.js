@@ -14,6 +14,8 @@ const { sendEmail1Message, buildLogoAttachmentAndSrc } = require('./email1Send')
 const CID_HERO = 'cumple-hero@abclogistica';
 
 const HERO_WHITE = '#ffffff';
+/** Mismo fondo que tarjeta Reconocimientos en HTML/editor (#f8fafc). */
+const RECO_TARJETA_BG = '#f8fafc';
 const RECO_CARD_W = 148;
 const RECO_CARD_H = 185;
 
@@ -50,7 +52,7 @@ async function embedReconocimientosCardImages(payload) {
             imagenGeminiSizePct: pct,
             targetW: RECO_CARD_W,
             targetH: RECO_CARD_H,
-            backgroundHexOverride: HERO_WHITE,
+            backgroundHexOverride: RECO_TARJETA_BG,
           });
           extra.push({
             filename: `reco-card-${i}.jpg`,

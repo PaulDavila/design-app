@@ -109,18 +109,6 @@ function hasText(s) {
   return t.length > 0
 }
 
-/** Sombra tintada con el color de fondo del correo (vista previa Reconocimientos). */
-function rgbaFromHex(hex, alpha) {
-  const h = String(hex || '').replace('#', '')
-  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
-    return `rgba(15, 23, 42, ${alpha})`
-  }
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `rgba(${r},${g},${b},${alpha})`
-}
-
 const INPUT_DT_CLASS =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none ring-violet-500/20 focus:ring-2'
 
@@ -256,13 +244,6 @@ export default function Cumpleanos1Editor({
   const previewFoot = useMemo(() => htmlOrPlainToPreview(dFoot), [dFoot])
 
   const fondoCorreo = FONDO_CORREO_HEX[fondoCorreoIdx] ?? FONDO_CORREO_HEX[0]
-
-  const recoTarjetaSombraStyle = useMemo(
-    () => ({
-      boxShadow: `0 2px 8px ${rgbaFromHex(fondoCorreo, 0.845)}, 0 1px 3px ${rgbaFromHex(fondoCorreo, 0.473)}`,
-    }),
-    [fondoCorreo]
-  )
 
   const showCuerpo = hasText(cuerpoHtml)
   const showFooter = hasText(dFoot)
@@ -1397,11 +1378,10 @@ export default function Cumpleanos1Editor({
                       {tablaTarjetas.map((t, idx) => (
                         <div
                           key={idx}
-                          className="flex min-h-0 w-full flex-row items-stretch overflow-hidden rounded-xl bg-white"
-                          style={recoTarjetaSombraStyle}
+                          className="flex min-h-0 w-full flex-row items-stretch overflow-hidden rounded-xl bg-[#f8fafc]"
                         >
-                          <div className="box-border flex w-[30%] shrink-0 self-stretch min-h-0 bg-white pr-[10px]">
-                            <div className="relative h-full min-h-[140px] w-full min-w-0 overflow-hidden bg-white">
+                          <div className="box-border flex w-[30%] shrink-0 self-stretch min-h-0 bg-[#f8fafc] pr-[10px]">
+                            <div className="relative h-full min-h-[140px] w-full min-w-0 overflow-hidden bg-[#f8fafc]">
                               {t.imagenTarjetaUrl ? (
                                 <img
                                   src={t.imagenTarjetaUrl}
@@ -1413,11 +1393,11 @@ export default function Cumpleanos1Editor({
                                   }}
                                 />
                               ) : (
-                                <div className="absolute inset-0 bg-white" />
+                                <div className="absolute inset-0 bg-[#f8fafc]" />
                               )}
                             </div>
                           </div>
-                          <div className="box-border flex w-[70%] flex-col bg-white pl-0 pr-[10px] pb-[10px] pt-[15px]">
+                          <div className="box-border flex w-[70%] flex-col bg-[#f8fafc] pl-0 pr-[10px] pb-[10px] pt-[15px]">
                             <div
                               className="w-full break-words text-[17px] font-bold leading-snug"
                               style={{

@@ -27,22 +27,8 @@ function escapeAttr(s) {
     .replace(/</g, '&lt;');
 }
 
-/** Igual que client/src/Cumpleanos1Editor.jsx — sombra de tarjeta Reconocimientos según fondo del correo. */
-function rgbaFromHex(hex, alpha) {
-  const h = String(hex || '').replace('#', '');
-  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
-    return `rgba(15, 23, 42, ${alpha})`;
-  }
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-function recoTarjetaBoxShadow(fondoCorreoHex) {
-  const hex = typeof fondoCorreoHex === 'string' && fondoCorreoHex ? fondoCorreoHex : FONDO_CORREO_HEX[0];
-  return `0 2px 8px ${rgbaFromHex(hex, 0.845)}, 0 1px 3px ${rgbaFromHex(hex, 0.473)}`;
-}
+/** Fondo tarjeta Reconocimientos (mismo que vista previa en Cumpleanos1Editor). */
+const RECO_TARJETA_BG = '#f8fafc';
 
 function injectLinkStyle(fragment, linkStyle) {
   return fragment.replace(/<a\s+/gi, `<a style="${linkStyle}" `);
@@ -187,11 +173,10 @@ const RECO_IMG_H = 185;
 const RECO_COL_IMG = 168;
 const RECO_COL_TXT = RECO_CARD_OUTER_W - RECO_COL_IMG;
 
-function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
+function buildReconocimientosCardsHtml(tarjetas) {
   const list = Array.isArray(tarjetas) ? tarjetas : [];
   const RECO = '#003b49';
   const linkStyle = 'color:#7c3aed;';
-  const boxShadow = recoTarjetaBoxShadow(fondoCorreoHex);
 
   const cardBlocks = list
     .map((t) => {
@@ -206,18 +191,16 @@ function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
       /** Sin height en la etiqueta: muchos webmails ignoran object-fit y estiran si width+height fijan otro ratio. */
       const imgBlock = src
         ? `<img src="${src}" alt="" width="${RECO_IMG_W}" style="display:block;width:${RECO_IMG_W}px;max-width:${RECO_IMG_W}px;height:auto;max-height:${RECO_IMG_H}px;border:0;line-height:0;outline:none;text-decoration:none;object-fit:cover;vertical-align:top;" />`
-        : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:#ffffff;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+        : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:${RECO_TARJETA_BG};font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
-      /** Sombra en div exterior (overflow visible); interior con overflow hidden para esquinas — si overflow:hidden va en el mismo nodo que box-shadow, muchos clientes recortan la sombra. */
       return `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
   <tr>
     <td align="center" style="padding:0 0 16px 0;">
-      <div style="display:inline-block;width:100%;max-width:${RECO_CARD_OUTER_W}px;margin:0;padding:0;border:0;box-sizing:border-box;box-shadow:${boxShadow};-webkit-box-shadow:${boxShadow};border-radius:12px;">
-        <div style="border-radius:12px;background:#ffffff;overflow:hidden;text-align:left;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;border:0;background:#ffffff;mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
+      <div style="display:inline-block;width:100%;max-width:${RECO_CARD_OUTER_W}px;margin:0;padding:0;border:0;border-radius:12px;background:${RECO_TARJETA_BG};overflow:hidden;box-sizing:border-box;text-align:left;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;border:0;background:${RECO_TARJETA_BG};mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
           <tr>
-            <td width="${RECO_COL_IMG}" valign="middle" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background:#ffffff;">
+            <td width="${RECO_COL_IMG}" valign="middle" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background:${RECO_TARJETA_BG};">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
                 <tr>
                   <td align="center" valign="middle" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${RECO_IMG_W}px;">
@@ -226,7 +209,7 @@ function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
                 </tr>
               </table>
             </td>
-            <td width="${RECO_COL_TXT}" valign="top" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background:#ffffff;">
+            <td width="${RECO_COL_TXT}" valign="top" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background:${RECO_TARJETA_BG};">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
                 <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;padding:0 0 4px 0;">${titulo || '&nbsp;'}</td></tr>
                 <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;padding:0 0 12px 0;">${areaTxt || '&nbsp;'}</td></tr>
@@ -235,7 +218,6 @@ function buildReconocimientosCardsHtml(tarjetas, fondoCorreoHex) {
             </td>
           </tr>
         </table>
-        </div>
       </div>
     </td>
   </tr>
@@ -318,7 +300,7 @@ function buildCumpleanosFamilyHtml(editorTipo, { payload, logoImgSrc, heroImage,
   const tarjetas = Array.isArray(payload?.tablaTarjetas) ? payload.tablaTarjetas : [];
   const tablaHtml =
     editorTipo === 'reconocimientos_1'
-      ? buildReconocimientosCardsHtml(tarjetas, fondoCorreo)
+      ? buildReconocimientosCardsHtml(tarjetas)
       : editorTipo === 'aniversarios_1'
         ? buildAniversariosTableHtml(tarjetas)
         : buildCumpleanosTableHtml(tarjetas);
@@ -327,9 +309,7 @@ function buildCumpleanosFamilyHtml(editorTipo, { payload, logoImgSrc, heroImage,
   const ctaRowAfterCuerpo = buildEmail1CtaRowHtml(payload, 1);
 
   const bodyStyle = `margin:0;padding:0;background-color:${fondoCorreo};font-family:Verdana,Geneva,sans-serif;`;
-  /** Reconocimientos: overflow visible para que la box-shadow del div de cada tarjeta no la recorte el contenedor (igual que en el navegador). Resto de tipos: hidden para bordes redondeados del bloque. */
-  const cardOverflow = editorTipo === 'reconocimientos_1' ? 'visible' : 'hidden';
-  const cardStyle = `max-width:600px;margin:0 auto;background:#ffffff;border:1px solid ${borderColor};border-radius:16px;overflow:${cardOverflow};`;
+  const cardStyle = `max-width:600px;margin:0 auto;background:#ffffff;border:1px solid ${borderColor};border-radius:16px;overflow:hidden;`;
   const innerStyle = 'padding:20px 24px 16px;';
   const textStyle =
     'font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;';
