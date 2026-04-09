@@ -1,6 +1,8 @@
-# Vite 8 + toolchain del client requieren Node 20.19+ (Railway/Nixpacks usaba 18 por defecto).
+# Node: Vite 8 necesita ^20.19 o >=22.12. Solo [variables] a veces no aplica (p. ej. variable en Railway o engines ambiguos).
+# nixPkgs en setup fuerza el runtime de Nix que Nixpacks instala (evita caer en nodejs_18 por defecto).
 [variables]
-# Vite 8 exige Node ^20.19 o >=22.12; el stack 22 de Nixpacks aún trae 22.11.
 NIXPACKS_NODE_VERSION = "23"
-# npm ci en Linux omitía @rolldown/binding-linux-x64-gnu (lock desde otra OS); install + no production arregla Vite 8.
 NPM_CONFIG_PRODUCTION = "false"
+
+[phases.setup]
+nixPkgs = ["nodejs_23", "npm-9_x"]

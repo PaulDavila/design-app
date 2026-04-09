@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "rm -rf client/node_modules && NPM_CONFIG_PRODUCTION=false npm install --no-package-lock --prefix client && node scripts/ensure-rolldown-linux-binding.cjs && npm run build --prefix client",
+    "build": "node -v && npm -v && rm -rf client/node_modules && NPM_CONFIG_PRODUCTION=false npm install --no-package-lock --prefix client && node scripts/ensure-rolldown-linux-binding.cjs && npm run build --prefix client",
     "dev": "node index.js",
     "seed": "node scripts/seed-fase2.js",
     "migrate:email-estado": "node scripts/apply-migration-email-estado-programado.js",
@@ -19,7 +19,7 @@
   "license": "ISC",
   "description": "App interna de comunicados con IA — backend Sprint 1",
   "engines": {
-    "node": ">=20.19.0"
+    "node": "23.x"
   },
   "dependencies": {
     "cors": "^2.8.5",
