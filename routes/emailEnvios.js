@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
+const { resolveRecipients } = require('../lib/parseDestinatarios');
 
 function resolveUsuarioId(req) {
   const raw = req.headers['x-user-id'] ?? req.body?.usuario_id ?? req.query?.usuario_id;
@@ -214,6 +215,114 @@ router.post('/', async (req, res) => {
       dbErrno: err.errno,
       dbCode: err.code,
       dbMessage: err.sqlMessage ? String(err.sqlMessage).slice(0, 240) : undefined,
+    });
+  }
+});
+
+/**
+ * POST /api/email-envios/enviar-prueba
+ * Envía el mismo HTML que producción a una lista explícita de correos; asunto con prefijo TEST:
+ * No crea ni actualiza solicitudes.
+ */
+router.post('/enviar-prueba', async (req, res) => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const plantilla_id = parseInt(req.body?.plantilla_id, 10);
+  const payload = req.body?.payload;
+  const destinatarios = req.body?.destinatarios != null ? String(req.body.destinatarios).trim() : '';
+  const sidRaw = req.body?.solicitud_id;
+  const solicitud_id = sidRaw != null && String(sidRaw).trim() !== '' ? parseInt(String(sidRaw), 10) : NaN;
+
+  const rawTipo =
+    req.body?.editor_tipo != null ? String(req.body.editor_tipo).trim().toLowerCase() : 'email1';
+  const allowedTipo = new Set([
+    'email1',
+    'newsletter_1',
+    'email2',
+    'email3',
+    'email4',
+    'cumpleanos_1',
+    'aniversarios_1',
+    'reconocimientos_1',
+  ]);
+  if (!allowedTipo.has(rawTipo)) {
+    return res.status(400).json({
+      error:
+        'editor_tipo debe ser email1, newsletter_1, email2, email3, email4, cumpleanos_1, aniversarios_1 o reconocimientos_1',
+    });
+  }
+  const editor_tipo = rawTipo;
+
+  if (!Number.isFinite(plantilla_id)) {
+    return res.status(400).json({ error: 'plantilla_id inválido' });
+  }
+  if (!payload || typeof payload !== 'object') {
+    return res.status(400).json({ error: 'payload (objeto JSON) requerido' });
+  }
+
+  const r = resolveRecipients(false, destinatarios);
+  if (!r.ok) {
+    return res.status(400).json({ error: r.error });
+  }
+
+  try {
+    const [plRows] = await pool.query('SELECT id FROM plantillas WHERE id = ?', [plantilla_id]);
+    if (!plRows[0]) {
+      return res.status(400).json({ error: `No existe plantillas.id=${plantilla_id}` });
+    }
+
+    const sidOpt = Number.isFinite(solicitud_id) && solicitud_id > 0 ? solicitud_id : undefined;
+
+    if (editor_tipo === 'email1' || editor_tipo === 'newsletter_1') {
+      const { sendEmail1Prueba } = require('../services/email1Send');
+      await sendEmail1Prueba({
+        plantilla_id,
+        editor_tipo,
+        payload,
+        destinatariosRaw: destinatarios,
+        solicitud_id: sidOpt,
+      });
+    } else if (editor_tipo === 'email2') {
+      const { sendEmail2Prueba } = require('../services/email2Send');
+      await sendEmail2Prueba({
+        plantilla_id,
+        payload,
+        destinatariosRaw: destinatarios,
+        solicitud_id: sidOpt,
+      });
+    } else if (editor_tipo === 'email3') {
+      const { sendEmail3Prueba } = require('../services/email3Send');
+      await sendEmail3Prueba({
+        plantilla_id,
+        payload,
+        destinatariosRaw: destinatarios,
+        solicitud_id: sidOpt,
+      });
+    } else if (editor_tipo === 'email4') {
+      const { sendEmail4Prueba } = require('../services/email4Send');
+      await sendEmail4Prueba({
+        plantilla_id,
+        payload,
+        destinatariosRaw: destinatarios,
+        solicitud_id: sidOpt,
+      });
+    } else {
+      const { sendCumpleanosFamilyPrueba } = require('../services/cumpleanosSend');
+      await sendCumpleanosFamilyPrueba({
+        plantilla_id,
+        editor_tipo,
+        payload,
+        destinatariosRaw: destinatarios,
+        solicitud_id: sidOpt,
+      });
+    }
+
+    res.json({ ok: true, mensaje: 'Correo de prueba enviado.' });
+  } catch (err) {
+    console.error('POST /api/email-envios/enviar-prueba:', err);
+    res.status(500).json({
+      error: err?.message ? String(err.message) : 'No se pudo enviar el correo de prueba',
     });
   }
 });

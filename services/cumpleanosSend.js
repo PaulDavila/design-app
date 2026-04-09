@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 const { parseDataUriForEmail } = require('../lib/parseDataUri');
 const { rasterizeGeminiBufferForEmail, fetchImageBufferFromUrl } = require('./email1GeminiRaster');
 const { buildEmail1SocialCidAttachments } = require('./email1SocialCid');
-const { resolveSolicitudSubject } = require('../lib/mailFrom');
+const { resolveSolicitudSubject, resolveTestEmailSubject } = require('../lib/mailFrom');
 const {
   buildCumpleanosFamilyHtml,
   readLogoRutaCumpleanos,
@@ -77,22 +77,18 @@ async function embedReconocimientosCardImages(payload) {
 /**
  * @param {'cumpleanos_1' | 'aniversarios_1' | 'reconocimientos_1'} editorTipo
  */
-async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
-  if (row.editor_tipo !== editorTipo) {
-    throw new Error(`Solo editor_tipo ${editorTipo} admite este envío SMTP`);
-  }
-  const payload = body.payload;
+async function compileCumpleanosFamilyOutgoing(plantilla_id, editorTipo, payload) {
   if (!payload || typeof payload !== 'object') {
     throw new Error('payload inválido');
   }
 
-  const [plRows] = await pool.query('SELECT definicion FROM plantillas WHERE id = ?', [row.plantilla_id]);
+  const [plRows] = await pool.query('SELECT definicion FROM plantillas WHERE id = ?', [plantilla_id]);
   const definicion = plRows[0]?.definicion;
   const logoRel = readLogoRutaCumpleanos(definicion);
 
   const { attachments: logoAtt, logoImgSrc } = buildLogoAttachmentAndSrc(logoRel);
 
-  const attachments = [];
+  const heroAttachments = [];
   let heroImage = { mode: 'placeholder', kind: 'empty' };
   const rawHero = typeof payload?.imagenHeroUrl === 'string' ? payload.imagenHeroUrl.trim() : '';
 
@@ -124,7 +120,7 @@ async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
           targetH: CUMPLE_HERO_H,
           backgroundHexOverride: HERO_WHITE,
         });
-        attachments.push({
+        heroAttachments.push({
           filename: 'imagen-hero.jpg',
           content: jpegBuf,
           contentType: 'image/jpeg',
@@ -156,7 +152,7 @@ async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
     cardAtt = emb.attachments;
   }
 
-  const allAttachments = [...logoAtt, ...attachments, ...cardAtt, ...socialAtt];
+  const allAttachments = [...logoAtt, ...heroAttachments, ...cardAtt, ...socialAtt];
 
   const html = buildCumpleanosFamilyHtml(editorTipo, {
     payload: payloadForHtml,
@@ -165,6 +161,18 @@ async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
     socialImgSrcById,
   });
 
+  return { html, attachments: allAttachments };
+}
+
+/**
+ * @param {'cumpleanos_1' | 'aniversarios_1' | 'reconocimientos_1'} editorTipo
+ */
+async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
+  if (row.editor_tipo !== editorTipo) {
+    throw new Error(`Solo editor_tipo ${editorTipo} admite este envío SMTP`);
+  }
+  const payload = body.payload;
+  const { html, attachments } = await compileCumpleanosFamilyOutgoing(row.plantilla_id, editorTipo, payload);
   const subject = resolveSolicitudSubject(row, payload);
 
   await sendEmail1Message({
@@ -172,7 +180,25 @@ async function sendCumpleanosFamilyForSolicitud(row, body, editorTipo) {
     html,
     enviarTodos: Boolean(body.enviar_todos),
     destinatariosRaw: body.destinatarios != null ? String(body.destinatarios) : '',
-    attachments: allAttachments,
+    attachments,
+  });
+}
+
+async function sendCumpleanosFamilyPrueba(opts) {
+  const plantilla_id = Number(opts.plantilla_id);
+  const editorTipo = String(opts.editor_tipo || '').trim();
+  const payload = opts.payload;
+  const destinatariosRaw = opts.destinatariosRaw != null ? String(opts.destinatariosRaw) : '';
+  const sid = Number(opts.solicitud_id);
+  const row = { id: Number.isFinite(sid) && sid > 0 ? sid : 0 };
+  const { html, attachments } = await compileCumpleanosFamilyOutgoing(plantilla_id, editorTipo, payload);
+  const subject = resolveTestEmailSubject(row, payload);
+  await sendEmail1Message({
+    subject,
+    html,
+    enviarTodos: false,
+    destinatariosRaw,
+    attachments,
   });
 }
 
@@ -193,4 +219,6 @@ module.exports = {
   sendAniversarios1ForSolicitud,
   sendReconocimientos1ForSolicitud,
   sendCumpleanosFamilyForSolicitud,
+  sendCumpleanosFamilyPrueba,
+  compileCumpleanosFamilyOutgoing,
 };

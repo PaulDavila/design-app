@@ -13,7 +13,7 @@ const { resolveRecipients } = require('../lib/parseDestinatarios');
 const { parseDataUriForEmail } = require('../lib/parseDataUri');
 const { rasterizeGeminiBufferForEmail, fetchImageBufferFromUrl } = require('./email1GeminiRaster');
 const { buildEmail1SocialCidAttachments } = require('./email1SocialCid');
-const { buildFromHeader, resolveSolicitudSubject } = require('../lib/mailFrom');
+const { buildFromHeader, resolveSolicitudSubject, resolveTestEmailSubject } = require('../lib/mailFrom');
 const { GEMINI_EMAIL_W, GEMINI_EMAIL_H } = require('./email1GeminiRaster');
 
 const CID_LOGO = 'email1-logo@abclogistica';
@@ -157,14 +157,14 @@ async function buildGeminiAttachmentAndBodyImage(payload, rasterOpts = {}) {
 }
 
 /**
- * @param {object} row - fila email_envios_solicitud
- * @param {{ payload: object, enviar_todos: boolean, destinatarios: string }} body
+ * @param {{ plantilla_id: number, editor_tipo: string }} row
+ * @param {object} payload
+ * @returns {Promise<{ html: string, attachments: object[] }>}
  */
-async function sendEmail1ForSolicitud(row, body) {
+async function compileEmail1Outgoing(row, payload) {
   if (row.editor_tipo !== 'email1' && row.editor_tipo !== 'newsletter_1') {
     throw new Error('Solo editor_tipo email1 o newsletter_1 admite envío SMTP en esta ruta');
   }
-  const payload = body.payload;
   if (!payload || typeof payload !== 'object') {
     throw new Error('payload inválido');
   }
@@ -208,6 +208,16 @@ async function sendEmail1ForSolicitud(row, body) {
         socialImgSrcById,
       });
 
+  return { html, attachments };
+}
+
+/**
+ * @param {object} row - fila email_envios_solicitud
+ * @param {{ payload: object, enviar_todos: boolean, destinatarios: string }} body
+ */
+async function sendEmail1ForSolicitud(row, body) {
+  const payload = body.payload;
+  const { html, attachments } = await compileEmail1Outgoing(row, payload);
   const subject = resolveSolicitudSubject(row, payload);
 
   await sendEmail1Message({
@@ -219,9 +229,37 @@ async function sendEmail1ForSolicitud(row, body) {
   });
 }
 
+/**
+ * Envío de prueba (no crea solicitud). Lista explícita de destinatarios; asunto con prefijo TEST:
+ * @param {{ plantilla_id: number, editor_tipo: 'email1'|'newsletter_1', payload: object, destinatariosRaw: string, solicitud_id?: number }} opts
+ */
+async function sendEmail1Prueba(opts) {
+  const plantilla_id = Number(opts.plantilla_id);
+  const editor_tipo = String(opts.editor_tipo || '').trim();
+  const payload = opts.payload;
+  const destinatariosRaw = opts.destinatariosRaw != null ? String(opts.destinatariosRaw) : '';
+  const sid = Number(opts.solicitud_id);
+  const row = {
+    plantilla_id,
+    editor_tipo,
+    id: Number.isFinite(sid) && sid > 0 ? sid : 0,
+  };
+  const { html, attachments } = await compileEmail1Outgoing(row, payload);
+  const subject = resolveTestEmailSubject(row, payload);
+  await sendEmail1Message({
+    subject,
+    html,
+    enviarTodos: false,
+    destinatariosRaw,
+    attachments,
+  });
+}
+
 module.exports = {
   sendEmail1Message,
   sendEmail1ForSolicitud,
+  sendEmail1Prueba,
+  compileEmail1Outgoing,
   getTransport,
   buildLogoAttachmentAndSrc,
 };

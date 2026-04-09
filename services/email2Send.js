@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 const { parseDataUriForEmail } = require('../lib/parseDataUri');
 const { rasterizeGeminiBufferForEmail, fetchImageBufferFromUrl } = require('./email1GeminiRaster');
 const { buildEmail1SocialCidAttachments } = require('./email1SocialCid');
-const { resolveSolicitudSubject } = require('../lib/mailFrom');
+const { resolveSolicitudSubject, resolveTestEmailSubject } = require('../lib/mailFrom');
 const {
   buildEmail2Html,
   readLogoRutaEmail2,
@@ -81,20 +81,11 @@ async function buildOneGeminiCid(payload, urlKey, boxIdxKey, sizePctKey, targetW
   }
 }
 
-/**
- * @param {object} row
- * @param {{ payload: object, enviar_todos: boolean, destinatarios: string }} body
- */
-async function sendEmail2ForSolicitud(row, body) {
-  if (row.editor_tipo !== 'email2') {
-    throw new Error('Solo editor_tipo email2 admite este envío SMTP');
-  }
-  const payload = body.payload;
+async function compileEmail2Outgoing(plantilla_id, payload) {
   if (!payload || typeof payload !== 'object') {
     throw new Error('payload inválido');
   }
-
-  const [plRows] = await pool.query('SELECT definicion FROM plantillas WHERE id = ?', [row.plantilla_id]);
+  const [plRows] = await pool.query('SELECT definicion FROM plantillas WHERE id = ?', [plantilla_id]);
   const definicion = plRows[0]?.definicion;
   const logoRel = readLogoRutaEmail2(definicion);
 
@@ -141,6 +132,19 @@ async function sendEmail2ForSolicitud(row, body) {
     socialImgSrcById,
   });
 
+  return { html, attachments };
+}
+
+/**
+ * @param {object} row
+ * @param {{ payload: object, enviar_todos: boolean, destinatarios: string }} body
+ */
+async function sendEmail2ForSolicitud(row, body) {
+  if (row.editor_tipo !== 'email2') {
+    throw new Error('Solo editor_tipo email2 admite este envío SMTP');
+  }
+  const payload = body.payload;
+  const { html, attachments } = await compileEmail2Outgoing(row.plantilla_id, payload);
   const subject = resolveSolicitudSubject(row, payload);
 
   await sendEmail1Message({
@@ -152,4 +156,21 @@ async function sendEmail2ForSolicitud(row, body) {
   });
 }
 
-module.exports = { sendEmail2ForSolicitud };
+async function sendEmail2Prueba(opts) {
+  const plantilla_id = Number(opts.plantilla_id);
+  const payload = opts.payload;
+  const destinatariosRaw = opts.destinatariosRaw != null ? String(opts.destinatariosRaw) : '';
+  const sid = Number(opts.solicitud_id);
+  const row = { id: Number.isFinite(sid) && sid > 0 ? sid : 0 };
+  const { html, attachments } = await compileEmail2Outgoing(plantilla_id, payload);
+  const subject = resolveTestEmailSubject(row, payload);
+  await sendEmail1Message({
+    subject,
+    html,
+    enviarTodos: false,
+    destinatariosRaw,
+    attachments,
+  });
+}
+
+module.exports = { sendEmail2ForSolicitud, sendEmail2Prueba, compileEmail2Outgoing };

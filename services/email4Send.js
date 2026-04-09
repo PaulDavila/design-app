@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 const { parseDataUriForEmail } = require('../lib/parseDataUri');
 const { rasterizeGeminiBufferForEmail, fetchImageBufferFromUrl } = require('./email1GeminiRaster');
 const { buildEmail1SocialCidAttachments } = require('./email1SocialCid');
-const { resolveSolicitudSubject } = require('../lib/mailFrom');
+const { resolveSolicitudSubject, resolveTestEmailSubject } = require('../lib/mailFrom');
 const {
   buildEmail4Html,
   readLogoRutaEmail4,
@@ -71,16 +71,11 @@ async function buildOneGeminiCid(payload, urlKey, boxIdxKey, sizePctKey, targetW
   }
 }
 
-async function sendEmail4ForSolicitud(row, body) {
-  if (row.editor_tipo !== 'email4') {
-    throw new Error('Solo editor_tipo email4 admite este envío SMTP');
-  }
-  const payload = body.payload;
+async function compileEmail4Outgoing(plantilla_id, payload) {
   if (!payload || typeof payload !== 'object') {
     throw new Error('payload inválido');
   }
-
-  const [plRows] = await pool.query('SELECT definicion FROM plantillas WHERE id = ?', [row.plantilla_id]);
+  const [plRows] = await pool.query('SELECT definicion FROM plantillas WHERE id = ?', [plantilla_id]);
   const definicion = plRows[0]?.definicion;
   const logoRel = readLogoRutaEmail4(definicion);
 
@@ -127,6 +122,15 @@ async function sendEmail4ForSolicitud(row, body) {
     socialImgSrcById,
   });
 
+  return { html, attachments };
+}
+
+async function sendEmail4ForSolicitud(row, body) {
+  if (row.editor_tipo !== 'email4') {
+    throw new Error('Solo editor_tipo email4 admite este envío SMTP');
+  }
+  const payload = body.payload;
+  const { html, attachments } = await compileEmail4Outgoing(row.plantilla_id, payload);
   const subject = resolveSolicitudSubject(row, payload);
 
   await sendEmail1Message({
@@ -138,4 +142,21 @@ async function sendEmail4ForSolicitud(row, body) {
   });
 }
 
-module.exports = { sendEmail4ForSolicitud };
+async function sendEmail4Prueba(opts) {
+  const plantilla_id = Number(opts.plantilla_id);
+  const payload = opts.payload;
+  const destinatariosRaw = opts.destinatariosRaw != null ? String(opts.destinatariosRaw) : '';
+  const sid = Number(opts.solicitud_id);
+  const row = { id: Number.isFinite(sid) && sid > 0 ? sid : 0 };
+  const { html, attachments } = await compileEmail4Outgoing(plantilla_id, payload);
+  const subject = resolveTestEmailSubject(row, payload);
+  await sendEmail1Message({
+    subject,
+    html,
+    enviarTodos: false,
+    destinatariosRaw,
+    attachments,
+  });
+}
+
+module.exports = { sendEmail4ForSolicitud, sendEmail4Prueba, compileEmail4Outgoing };

@@ -7,6 +7,7 @@ import { htmlOrPlainToPreview } from './utils/sanitizeEmailHtml'
 import RichTextEmailField from './RichTextEmailField.jsx'
 import ImageGenCharactersWarning from './ImageGenCharactersWarning.jsx'
 import EmailCtaAsideBlock from './EmailCtaAsideBlock.jsx'
+import EmailEnvioPruebaAside from './EmailEnvioPruebaAside.jsx'
 import { EMAIL_RICH_PREVIEW_BODY, EMAIL_RICH_PREVIEW_FOOTER } from './emailRichTextClasses.js'
 import {
   clampCtaFontSizePx,
@@ -192,6 +193,8 @@ export default function Email1Editor({
   const [solicitudActivaId, setSolicitudActivaId] = useState(null)
   const [apiError, setApiError] = useState('')
   const [apiBusy, setApiBusy] = useState(false)
+  const [correosPruebaCsv, setCorreosPruebaCsv] = useState('')
+  const [testOkMessage, setTestOkMessage] = useState('')
 
   const previewCardRef = useRef(null)
   const printTitleBeforeRef = useRef(null)
@@ -520,8 +523,7 @@ export default function Email1Editor({
     reader.readAsText(file, 'UTF-8')
   }
 
-  const handleContinuarDesdeEdit = () => {
-    setApiError('')
+  const prepareScheduleDefaults = useCallback(() => {
     if (!effectiveCanSelfSchedule || solicitudActivaId == null) {
       const { fecha, hora } = defaultDateStrings()
       setFechaProg(fecha)
@@ -530,12 +532,59 @@ export default function Email1Editor({
       setDestinatariosCsv('')
     }
     setEnviarInmediatamenteAdmin(false)
+  }, [effectiveCanSelfSchedule, solicitudActivaId])
+
+  const handleContinuarDesdeEdit = () => {
+    setApiError('')
+    setTestOkMessage('')
+    prepareScheduleDefaults()
+    setStep('review')
+  }
+
+  const handleContinuarFromReview = () => {
+    setApiError('')
+    setTestOkMessage('')
     setStep('schedule')
   }
 
-  const handleVolverSchedule = () => {
+  const handleVolverReview = () => {
     setStep('edit')
     setApiError('')
+    setTestOkMessage('')
+  }
+
+  const handleVolverSchedule = () => {
+    setStep('review')
+    setApiError('')
+    setTestOkMessage('')
+  }
+
+  const handleEnviarPrueba = async () => {
+    setApiError('')
+    setTestOkMessage('')
+    const list = parseEmailsCsv(correosPruebaCsv)
+    if (!emailsLookValid(list)) {
+      setApiError('Indica uno o más correos válidos separados por comas.')
+      return
+    }
+    setApiBusy(true)
+    try {
+      await fetchApi('/api/email-envios/enviar-prueba', {
+        method: 'POST',
+        body: JSON.stringify({
+          editor_tipo: editorTipoApi,
+          plantilla_id: plantilla.id,
+          payload: serializePayload(),
+          destinatarios: correosPruebaCsv.trim(),
+          solicitud_id: solicitudActivaId ?? undefined,
+        }),
+      })
+      setTestOkMessage('Correo de prueba enviado. Revisa la bandeja de los destinatarios.')
+    } catch (e) {
+      setApiError(e instanceof Error ? e.message : 'Error al enviar')
+    } finally {
+      setApiBusy(false)
+    }
   }
 
   const handleEnviarRevision = async () => {
@@ -1002,6 +1051,19 @@ export default function Email1Editor({
 
   const asideEditorial = variant === 'newsletter' ? asideNewsletter : asideEmail1
 
+  const asideReview = (
+    <EmailEnvioPruebaAside
+      onVolverEdit={handleVolverReview}
+      onContinuarEnvio={handleContinuarFromReview}
+      correosPrueba={correosPruebaCsv}
+      onCorreosPruebaChange={setCorreosPruebaCsv}
+      onEnviarPrueba={() => void handleEnviarPrueba()}
+      apiError={apiError}
+      apiBusy={apiBusy}
+      testOkMessage={testOkMessage}
+    />
+  )
+
   const asideSchedule = (
     <div className="space-y-4">
       <button
@@ -1009,7 +1071,7 @@ export default function Email1Editor({
         onClick={handleVolverSchedule}
         className="text-sm font-medium text-violet-700 hover:underline"
       >
-        ← Volver al diseño
+        ← Volver a revisión
       </button>
 
       <div className="space-y-4">
@@ -1385,7 +1447,7 @@ export default function Email1Editor({
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col gap-4 lg:flex-row">
       <aside className="w-full shrink-0 space-y-4 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:w-[380px] lg:self-start">
-        {step === 'edit' ? asideEditorial : asideSchedule}
+        {step === 'edit' ? asideEditorial : step === 'review' ? asideReview : asideSchedule}
       </aside>
 
       <section className="email1-print-section flex min-h-0 min-w-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
@@ -1441,6 +1503,11 @@ export default function Email1Editor({
                 : solicitudActivaId != null
                   ? 'Pulsa Continuar para actualizar fecha, hora y destinatarios, y guardar de nuevo en revisión.'
                   : 'Pulsa Continuar para elegir fecha, hora y destinatarios, y enviar a revisión.'}
+          </p>
+        ) : step === 'review' ? (
+          <p className="email1-print-hide mb-2 text-[11px] leading-snug text-slate-500">
+            Misma vista previa que recibirán los destinatarios. Puedes enviar una prueba con asunto{' '}
+            <strong>TEST:</strong> o continuar al paso de programación y envío real.
           </p>
         ) : null}
 
