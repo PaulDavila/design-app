@@ -27,8 +27,9 @@ function escapeAttr(s) {
     .replace(/</g, '&lt;');
 }
 
-/** Fondo tarjeta Reconocimientos (mismo que vista previa en Cumpleanos1Editor). */
+/** Fondo tarjeta Reconocimientos (mismo que vista previa en Cumpleanos1Editor). Gmail suele ignorar background en div; usar bgcolor en table/td. */
 const RECO_TARJETA_BG = '#f8fafc';
+const RECO_TARJETA_BG_ATTR = RECO_TARJETA_BG.replace(/^#/, '');
 
 function injectLinkStyle(fragment, linkStyle) {
   return fragment.replace(/<a\s+/gi, `<a style="${linkStyle}" `);
@@ -191,34 +192,32 @@ function buildReconocimientosCardsHtml(tarjetas) {
       /** Sin height en la etiqueta: muchos webmails ignoran object-fit y estiran si width+height fijan otro ratio. */
       const imgBlock = src
         ? `<img src="${src}" alt="" width="${RECO_IMG_W}" style="display:block;width:${RECO_IMG_W}px;max-width:${RECO_IMG_W}px;height:auto;max-height:${RECO_IMG_H}px;border:0;line-height:0;outline:none;text-decoration:none;object-fit:cover;vertical-align:top;" />`
-        : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background:${RECO_TARJETA_BG};font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+        : `<table role="presentation" width="${RECO_IMG_W}" cellpadding="0" cellspacing="0" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;border-collapse:collapse;"><tr><td bgcolor="#${RECO_TARJETA_BG_ATTR}" style="width:${RECO_IMG_W}px;height:${RECO_IMG_H}px;background-color:${RECO_TARJETA_BG};font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
       return `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
   <tr>
     <td align="center" style="padding:0 0 16px 0;">
-      <div style="display:inline-block;width:100%;max-width:${RECO_CARD_OUTER_W}px;margin:0;padding:0;border:0;border-radius:12px;background:${RECO_TARJETA_BG};overflow:hidden;box-sizing:border-box;text-align:left;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;border:0;background:${RECO_TARJETA_BG};mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
-          <tr>
-            <td width="${RECO_COL_IMG}" valign="middle" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background:${RECO_TARJETA_BG};">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
-                <tr>
-                  <td align="center" valign="middle" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${RECO_IMG_W}px;">
-                    ${imgBlock}
-                  </td>
-                </tr>
-              </table>
-            </td>
-            <td width="${RECO_COL_TXT}" valign="top" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background:${RECO_TARJETA_BG};">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
-                <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;padding:0 0 4px 0;">${titulo || '&nbsp;'}</td></tr>
-                <tr><td style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;padding:0 0 12px 0;">${areaTxt || '&nbsp;'}</td></tr>
-                <tr><td style="font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;padding:0;">${cuerpoHtml || '&nbsp;'}</td></tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </div>
+      <table role="presentation" width="${RECO_CARD_OUTER_W}" align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="#${RECO_TARJETA_BG_ATTR}" style="width:100%;max-width:${RECO_CARD_OUTER_W}px;border-collapse:separate;border-spacing:0;background-color:${RECO_TARJETA_BG};border-radius:12px;mso-table-lspace:0pt;mso-table-rspace:0pt;table-layout:fixed;">
+        <tr>
+          <td width="${RECO_COL_IMG}" valign="middle" bgcolor="#${RECO_TARJETA_BG_ATTR}" style="width:${RECO_COL_IMG}px;max-width:${RECO_COL_IMG}px;padding:10px;vertical-align:middle;background-color:${RECO_TARJETA_BG};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+              <tr>
+                <td align="center" valign="middle" bgcolor="#${RECO_TARJETA_BG_ATTR}" style="padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;width:${RECO_IMG_W}px;background-color:${RECO_TARJETA_BG};">
+                  ${imgBlock}
+                </td>
+              </tr>
+            </table>
+          </td>
+          <td width="${RECO_COL_TXT}" valign="top" bgcolor="#${RECO_TARJETA_BG_ATTR}" style="width:${RECO_COL_TXT}px;max-width:${RECO_COL_TXT}px;padding:10px;vertical-align:top;background-color:${RECO_TARJETA_BG};">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+              <tr><td bgcolor="#${RECO_TARJETA_BG_ATTR}" style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:700;font-size:17px;line-height:1.3;color:${RECO};word-break:break-word;padding:0 0 4px 0;background-color:${RECO_TARJETA_BG};">${titulo || '&nbsp;'}</td></tr>
+              <tr><td bgcolor="#${RECO_TARJETA_BG_ATTR}" style="font-family:'Nunito Sans',Verdana,Geneva,sans-serif;font-weight:300;font-size:13px;line-height:1.4;color:${RECO};word-break:break-word;padding:0 0 12px 0;background-color:${RECO_TARJETA_BG};">${areaTxt || '&nbsp;'}</td></tr>
+              <tr><td bgcolor="#${RECO_TARJETA_BG_ATTR}" style="font-family:Verdana,Geneva,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;padding:0;background-color:${RECO_TARJETA_BG};">${cuerpoHtml || '&nbsp;'}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>`;
