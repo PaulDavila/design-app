@@ -517,6 +517,7 @@ router.post('/:id/completar', async (req, res) => {
               'UPDATE email_envios_solicitud SET enviado_en = NOW(), error_envio = NULL WHERE id = ?',
               [idBg]
             );
+            console.log(`[email-envios] SMTP ok solicitud id=${idBg}`);
           } catch (smtpErr) {
             console.error('Email SMTP (completar en segundo plano):', smtpErr);
             const msg = String(smtpErr.message || smtpErr).slice(0, 2000);

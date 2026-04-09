@@ -196,6 +196,8 @@ export default function Email1Editor({
   const previewCardRef = useRef(null)
   const printTitleBeforeRef = useRef(null)
   const importContactsInputRef = useRef(null)
+  /** Evita doble clic en “Enviar inmediatamente” → varios POST /api/email-envios. */
+  const adminCompletarLockRef = useRef(false)
 
   const d1 = useDebouncedValue(cuerpo1Html, 220)
   const d2 = useDebouncedValue(cuerpo2Html, 220)
@@ -647,6 +649,7 @@ export default function Email1Editor({
   ])
 
   const handleAdminCompletar = async () => {
+    if (adminCompletarLockRef.current || apiBusy) return
     setApiError('')
     let fechaFinalIso = null
     if (!enviarInmediatamenteAdmin) {
@@ -660,6 +663,7 @@ export default function Email1Editor({
       setApiError('Correos no válidos o vacíos.')
       return
     }
+    adminCompletarLockRef.current = true
     setApiBusy(true)
     try {
       let idCompletar = solicitudActivaId
@@ -703,6 +707,7 @@ export default function Email1Editor({
     } catch (e) {
       setApiError(e instanceof Error ? e.message : 'Error al completar')
     } finally {
+      adminCompletarLockRef.current = false
       setApiBusy(false)
     }
   }

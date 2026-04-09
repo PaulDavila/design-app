@@ -98,7 +98,8 @@ export default function AdminEmailEnviosHomePanel({ userId, viewerRole = 'user',
     const run = () => void loadSolicitudes()
     window.addEventListener('focus', run)
     document.addEventListener('visibilitychange', run)
-    const intervalId = window.setInterval(run, 6000)
+    // Refresco automático suave (antes 6s parecía “un POST por segundo” en Network; solo es GET de lista).
+    const intervalId = window.setInterval(run, 30000)
     return () => {
       window.removeEventListener('focus', run)
       document.removeEventListener('visibilitychange', run)
@@ -399,6 +400,18 @@ export default function AdminEmailEnviosHomePanel({ userId, viewerRole = 'user',
                 <div className="text-xs text-slate-600">
                   {new Date(s.fecha_hora_programada).toLocaleString('es-MX')}
                 </div>
+                {s.error_envio ? (
+                  <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] text-red-800">
+                    <span className="font-semibold">Error al enviar por correo: </span>
+                    {s.error_envio}
+                  </p>
+                ) : ok && s.editor_tipo && ['email1', 'newsletter_1', 'email2', 'email3', 'email4', 'cumpleanos_1', 'aniversarios_1', 'reconocimientos_1'].includes(s.editor_tipo) ? (
+                  <p className="mt-2 text-[11px] text-slate-600">
+                    {s.enviado_en
+                      ? `Enviado por SMTP: ${new Date(s.enviado_en).toLocaleString('es-MX')}`
+                      : 'Correo en cola en el servidor (unos segundos). Recarga o espera el refresco si no ves “Enviado”.'}
+                  </p>
+                ) : null}
                 {renderAccionesListaDia(s)}
               </li>
             )
