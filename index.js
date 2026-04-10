@@ -19,11 +19,9 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(authOptional);
 
-// Miniaturas e imágenes base de plantillas (ruta_miniatura en BD es relativa a esta carpeta)
-app.use(
-  '/media/plantillas',
-  express.static(path.join(__dirname, 'storage', 'plantillas'), { fallthrough: false })
-);
+// Miniaturas e imágenes base: primero storage (puede ser volumen en prod); si no hay archivo, el build
+// incluye copias en client/dist vía public/ (p. ej. miniatura-reconocimientos.png).
+app.use('/media/plantillas', express.static(path.join(__dirname, 'storage', 'plantillas')));
 
 app.use('/health', healthRouter);
 app.use('/api/favoritos', favoritosRouter);
