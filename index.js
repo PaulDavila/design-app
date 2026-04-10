@@ -11,6 +11,7 @@ const componerRouter = require('./routes/componer');
 const nanoBananaRouter = require('./routes/nanoBanana');
 const meRouter = require('./routes/me');
 const emailEnviosRouter = require('./routes/emailEnvios');
+const { isResendEnabled } = require('./lib/resendSend');
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 4000;
@@ -69,4 +70,10 @@ if (serveClient) {
 const HOST = process.env.HOST || '0.0.0.0';
 app.listen(PORT, HOST, () => {
   console.log(`Design App escuchando en http://${HOST}:${PORT}`);
+  if (isResendEnabled() && !String(process.env.RESEND_FROM || '').trim()) {
+    console.warn(
+      '[design-app] RESEND_FROM vacío: se usa onboarding@resend.dev y Resend solo permite destinatarios de la cuenta. ' +
+        'Con dominio verificado, define en Railway (Variables) algo como: RESEND_FROM=ABC Logística <design@abclogistica.mx>'
+    );
+  }
 });
