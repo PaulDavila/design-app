@@ -73,7 +73,7 @@ function buildRows() {
       nombre: 'Reconocimientos',
       layout_indice: 7,
       grupo_layout: 'reconocimientos_1',
-      ruta_miniatura: 'miniaturas/email-aniversarios.png',
+      ruta_miniatura: 'miniaturas/miniatura-reconocimientos.png',
     },
   ];
   for (const a of avisosEmails) {

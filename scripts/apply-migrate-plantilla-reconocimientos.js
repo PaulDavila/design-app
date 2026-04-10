@@ -25,7 +25,11 @@ async function main() {
       ['reconocimientos_1', 'Reconocimientos', ID_EXTERNO]
     );
     if (rows.length > 0) {
-      console.log('OK: plantilla Reconocimientos ya existe (omitido).');
+      await conn.query(
+        `UPDATE plantillas SET ruta_miniatura = ? WHERE grupo_layout = ?`,
+        ['miniaturas/miniatura-reconocimientos.png', 'reconocimientos_1']
+      );
+      console.log('OK: plantilla Reconocimientos ya existe; miniatura actualizada.');
       return;
     }
 
@@ -47,7 +51,7 @@ async function main() {
         'reconocimientos_1',
         def600x1200(),
         BASE,
-        'miniaturas/email-aniversarios.png',
+        'miniaturas/miniatura-reconocimientos.png',
       ]
     );
     console.log('OK: plantilla Reconocimientos insertada.');
