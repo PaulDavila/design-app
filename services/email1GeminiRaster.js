@@ -28,6 +28,43 @@ function hexToRgb(hex) {
 }
 
 /**
+ * Gemini a veces devuelve blanco #fff opaco; flatten no lo sustituye. Solo píxeles casi blancos (>= min).
+ * @param {Buffer} jpegBuffer
+ * @param {string} targetHex - ej. #f8fafc
+ * @param {number} [minChannel=253]
+ */
+async function replaceNearPureWhiteWithHex(jpegBuffer, targetHex, minChannel = 253) {
+  const { r: tr, g: tg, b: tb } = hexToRgb(targetHex);
+  const { data, info } = await sharp(jpegBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+  let needs = false;
+  for (let i = 0; i < data.length; i += ch) {
+    if (data[i] >= minChannel && data[i + 1] >= minChannel && data[i + 2] >= minChannel) {
+      needs = true;
+      break;
+    }
+  }
+  if (!needs) return jpegBuffer;
+  for (let i = 0; i < data.length; i += ch) {
+    if (data[i] >= minChannel && data[i + 1] >= minChannel && data[i + 2] >= minChannel) {
+      data[i] = tr;
+      data[i + 1] = tg;
+      data[i + 2] = tb;
+      if (ch === 4) data[i + 3] = 255;
+    }
+  }
+  return sharp(data, {
+    raw: {
+      width: info.width,
+      height: info.height,
+      channels: ch,
+    },
+  })
+    .jpeg({ quality: 88, mozjpeg: true })
+    .toBuffer();
+}
+
+/**
  * Replica object-cover + scale del editor; salida JPEG targetW x targetH (por defecto Email 1).
  * @param {Buffer} inputBuffer
  * @param {object} opts - imgBoxIdx, imagenGeminiSizePct; opcional targetW, targetH
@@ -40,6 +77,8 @@ async function rasterizeGeminiBufferForEmail(inputBuffer, opts) {
 
   const rotated = sharp(inputBuffer).rotate();
 
+  const recoWhite = Boolean(opts?.recoTarjetaReplacePureWhite);
+
   if (s >= 1) {
     const outW = Math.max(1, Math.round(W * s));
     const outH = Math.max(1, Math.round((outW * H) / W));
@@ -49,11 +88,15 @@ async function rasterizeGeminiBufferForEmail(inputBuffer, opts) {
     const h0 = meta.height || outH;
     const left = Math.max(0, Math.floor((w0 - W) / 2));
     const top = Math.max(0, Math.floor((h0 - H) / 2));
-    return sharp(resized)
+    let jpegBuf = await sharp(resized)
       .extract({ left, top, width: W, height: H })
       .flatten({ background: bgHex })
       .jpeg({ quality: 88, mozjpeg: true })
       .toBuffer();
+    if (recoWhite) {
+      jpegBuf = await replaceNearPureWhiteWithHex(jpegBuf, bgHex);
+    }
+    return jpegBuf;
   }
 
   const covered = await rotated.resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
@@ -65,7 +108,7 @@ async function rasterizeGeminiBufferForEmail(inputBuffer, opts) {
   const top = Math.floor((H - smallH) / 2);
   const { r, g, b } = hexToRgb(bgHex);
 
-  return sharp({
+  let jpegBuf = await sharp({
     create: {
       width: W,
       height: H,
@@ -76,6 +119,10 @@ async function rasterizeGeminiBufferForEmail(inputBuffer, opts) {
     .composite([{ input: scaled, left, top }])
     .jpeg({ quality: 88, mozjpeg: true })
     .toBuffer();
+  if (recoWhite) {
+    jpegBuf = await replaceNearPureWhiteWithHex(jpegBuf, bgHex);
+  }
+  return jpegBuf;
 }
 
 /**
@@ -107,6 +154,7 @@ async function fetchImageBufferFromUrl(urlStr) {
 module.exports = {
   rasterizeGeminiBufferForEmail,
   fetchImageBufferFromUrl,
+  replaceNearPureWhiteWithHex,
   GEMINI_EMAIL_W,
   GEMINI_EMAIL_H,
 };

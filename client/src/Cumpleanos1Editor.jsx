@@ -15,6 +15,7 @@ import {
   sanitizeCtaHttpUrl,
 } from './email1CtaUtils.js'
 import { EMAIL_RICH_PREVIEW_BODY, EMAIL_RICH_PREVIEW_FOOTER } from './emailRichTextClasses.js'
+import { postProcessRecoTarjetaImageDataUrl } from './utils/reconocimientosTarjetaImageBg.js'
 
 const MAX_TARJETAS_TABLA = 30
 
@@ -221,6 +222,47 @@ export default function Cumpleanos1Editor({
   const [ctaAfter1Align, setCtaAfter1Align] = useState('center')
   const [footerHtml, setFooterHtml] = useState('<p></p>')
   const [tablaTarjetas, setTablaTarjetas] = useState(() => [tarjetaVacia(variant)])
+
+  /** Solo URLs de imagen: al cargar borradores con fondo blanco de Gemini, normalizar una vez a #f8fafc. */
+  const recoTarjetaDataUrlsKey =
+    variant === 'reconocimientos'
+      ? tablaTarjetas.map((t) => String(t.imagenTarjetaUrl || '')).join('\f')
+      : ''
+
+  useEffect(() => {
+    if (!recoTarjetaDataUrlsKey) return
+    let cancelled = false
+    void (async () => {
+      const updates = []
+      for (let idx = 0; idx < tablaTarjetas.length; idx += 1) {
+        const u = tablaTarjetas[idx]?.imagenTarjetaUrl
+        if (!u || !String(u).startsWith('data:')) continue
+        try {
+          const out = await postProcessRecoTarjetaImageDataUrl(u)
+          if (out !== u) updates.push({ idx, out })
+        } catch {
+          /* ignore */
+        }
+      }
+      if (cancelled || updates.length === 0) return
+      setTablaTarjetas((prev) => {
+        let changed = false
+        const next = prev.map((row, i) => {
+          const hit = updates.find((x) => x.idx === i)
+          if (!hit) return row
+          if (row.imagenTarjetaUrl === hit.out) return row
+          changed = true
+          return { ...row, imagenTarjetaUrl: hit.out }
+        })
+        return changed ? next : prev
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+    // recoTarjetaDataUrlsKey ya refleja solo URLs; no depender de tablaTarjetas completa (evita loop al teclear).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tablaTarjetas leído al disparar el efecto por cambio de URL
+  }, [recoTarjetaDataUrlsKey, variant])
 
   const [promptImagenHero, setPromptImagenHero] = useState('')
   const [imagenHeroUrl, setImagenHeroUrl] = useState('')
@@ -777,7 +819,15 @@ export default function Cumpleanos1Editor({
       }
       const data = await res.json()
       if (!data?.imageUrl) throw new Error('Respuesta sin imageUrl')
-      actualizarTarjeta(idx, { imagenTarjetaUrl: String(data.imageUrl) })
+      let url = String(data.imageUrl)
+      if (esReco) {
+        try {
+          url = await postProcessRecoTarjetaImageDataUrl(url)
+        } catch {
+          /* mantener url de la API */
+        }
+      }
+      actualizarTarjeta(idx, { imagenTarjetaUrl: url })
     } catch (err) {
       setErrorTarjetaGen(err instanceof Error ? err.message : 'No se pudo generar la imagen')
     } finally {

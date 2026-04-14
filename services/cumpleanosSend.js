@@ -53,6 +53,7 @@ async function embedReconocimientosCardImages(payload) {
             targetW: RECO_CARD_W,
             targetH: RECO_CARD_H,
             backgroundHexOverride: RECO_TARJETA_BG,
+            recoTarjetaReplacePureWhite: true,
           });
           extra.push({
             filename: `reco-card-${i}.jpg`,
