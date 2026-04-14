@@ -34,9 +34,16 @@ const ACCENT_FIJO = ACCENT_PALETTE_HEX[0]
 
 const HERO_BG_BLANCO = '#ffffff'
 
+/** Mismo fondo que la tarjeta Reconocimientos en vista previa / HTML (#f8fafc ≈ slate-50). */
+const RECO_TARJETA_IMAGEN_BG = '#f8fafc'
+
 /** Prefijo enviado a la IA: fondo siempre blanco puro. */
 const PROMPT_HERO_BLANCO_PREFIX =
   'The entire image background must be solid pure white #ffffff rgb(255,255,255) only—no gradients, textures, patterns, grey, cream, or transparency. All illustration sits on this white ground. Subject and style: '
+
+/** Prefijo para imagen IA de tarjeta Reconocimientos: mismo gris que el cuadro (no blanco). */
+const PROMPT_RECO_TARJETA_BG_PREFIX =
+  'The entire image background must be one flat opaque fill only, exact color #f8fafc rgb(248,250,252) only—no gradients, textures, patterns, white, cream, or transparency. All illustration sits on this exact ground. Subject and style: '
 
 /** Misma tabla que aniversarios (Desde / Nombre / Área) en vista previa. */
 function esVarianteTablaAniversarios(variant) {
@@ -739,7 +746,10 @@ export default function Cumpleanos1Editor({
     }
     setGenerandoTarjetaIdx(idx)
     try {
-      const promptCompleto = `${PROMPT_HERO_BLANCO_PREFIX}${texto}`
+      const esReco = variant === 'reconocimientos'
+      const bgHex = esReco ? RECO_TARJETA_IMAGEN_BG : HERO_BG_BLANCO
+      const prefijo = esReco ? PROMPT_RECO_TARJETA_BG_PREFIX : PROMPT_HERO_BLANCO_PREFIX
+      const promptCompleto = `${prefijo}${texto}`
       const res = await fetch(`${API_BASE}/api/nano-banana/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -747,7 +757,7 @@ export default function Cumpleanos1Editor({
           ratio: '1_1',
           nonce: Date.now(),
           prompt: promptCompleto,
-          backgroundHex: HERO_BG_BLANCO,
+          backgroundHex: bgHex,
           carouselStyleBackground: true,
         }),
       })
@@ -1191,10 +1201,10 @@ export default function Cumpleanos1Editor({
                       />
                       <div>
                         <label className="mb-1 block text-[11px] font-medium text-slate-600">
-                          Imagen de la tarjeta (IA) — fondo blanco
+                          Imagen de la tarjeta (IA) — fondo #f8fafc
                         </label>
                         <p className="mb-2 text-[11px] text-slate-500">
-                          Describe la escena; la API fuerza fondo blanco puro (#fff).
+                          Describe la escena; la API fuerza el mismo fondo que el cuadro de la tarjeta (#f8fafc).
                         </p>
                         <textarea
                           value={t.promptImagenTarjeta ?? ''}
@@ -1203,7 +1213,7 @@ export default function Cumpleanos1Editor({
                             actualizarTarjeta(idx, { promptImagenTarjeta: e.target.value })
                           }}
                           rows={3}
-                          placeholder="Ej.: ícono de reconocimiento y confeti sobre blanco…"
+                          placeholder="Ej.: ícono de reconocimiento y confeti sobre fondo #f8fafc…"
                           className="mb-2 w-full rounded-xl border border-dashed border-slate-300 bg-amber-50/50 px-3 py-2 text-sm text-slate-800 outline-none ring-amber-500/20 focus:ring-2"
                         />
                         <div className="space-y-2 rounded-xl border border-dashed border-slate-300 bg-amber-50/50 p-3">

@@ -221,7 +221,7 @@ function buildRequestBody(prompt, ratio, backgroundHexParsed, opts = {}) {
     const { r, g, b } = hexToRgb(backgroundHexParsed);
     headerBlock = [
       `BACKGROUND (highest priority): one flat opaque fill only, exact ${backgroundHexParsed} rgb(${r}, ${g}, ${b}). No gradients, textures, patterns, checkerboard, or any other background color.`,
-      `No color drift: the fill must remain visually identical to ${backgroundHexParsed} across the entire image—pure white means rgb(255,255,255) only.`,
+      `No color drift: the fill must remain visually identical to ${backgroundHexParsed} across the entire canvas—do not substitute white, grey, or cream unless that exact hex is white.`,
       `Aspect ratio ${aspectRatio}, hero illustration; keep the entire canvas background ${backgroundHexParsed}.`,
       `Variation seed: ${FIXED_VARIATION_SEED}.`,
     ].join(' ');
