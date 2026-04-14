@@ -7,7 +7,10 @@ import { EMAIL_RICH_EDITOR_LIST_CLASSES } from './emailRichTextClasses.js'
 import { htmlOrPlainToPreview } from './utils/sanitizeEmailHtml.js'
 import { LogoCarruselMedio } from './LogoCarruselMedio.jsx'
 import ImageGenCharactersWarning from './ImageGenCharactersWarning.jsx'
-import { syncCloneComputedColorsForHtml2Canvas } from './utils/syncCloneComputedColorsForHtml2Canvas.js'
+import {
+  stripHtml2CanvasCloneDocumentStyles,
+  syncCloneComputedColorsForHtml2Canvas,
+} from './utils/syncCloneComputedColorsForHtml2Canvas.js'
 
 const RATIOS = {
   '1_1': { label: '1:1', ancho: 1080, alto: 1080, aspectCss: '1 / 1' },
@@ -588,7 +591,8 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: (_doc, clonedElement) => {
+        onclone: (clonedDoc, clonedElement) => {
+          stripHtml2CanvasCloneDocumentStyles(clonedDoc)
           if (clonedElement instanceof HTMLElement) {
             syncCloneComputedColorsForHtml2Canvas(node, clonedElement)
           }

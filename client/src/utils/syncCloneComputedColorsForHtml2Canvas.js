@@ -103,6 +103,30 @@ function syncCloneComputedColorsRecursive(orig, clone) {
       clone.style.boxShadow = MODERN_COLOR_SYNTAX.test(bs) ? 'none' : bs
     }
 
+    const bgImg = cs.backgroundImage
+    if (bgImg && bgImg !== 'none' && MODERN_COLOR_SYNTAX.test(bgImg)) {
+      clone.style.backgroundImage = 'none'
+    } else if (bgImg && bgImg !== 'none') {
+      clone.style.backgroundImage = bgImg
+    }
+
+    const txtSh = cs.textShadow
+    if (txtSh && txtSh !== 'none' && MODERN_COLOR_SYNTAX.test(txtSh)) {
+      clone.style.textShadow = 'none'
+    } else if (txtSh && txtSh !== 'none') {
+      clone.style.textShadow = txtSh
+    }
+
+    const filt = cs.filter
+    if (filt && filt !== 'none' && MODERN_COLOR_SYNTAX.test(filt)) {
+      clone.style.filter = 'none'
+    }
+
+    const outline = cs.outline
+    if (outline && outline !== 'none' && MODERN_COLOR_SYNTAX.test(outline)) {
+      clone.style.outline = 'none'
+    }
+
     for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
       const wKey = `border${side}Width`
       const sKey = `border${side}Style`
@@ -151,9 +175,31 @@ export function stripHtml2CanvasCloneDocumentStyles(doc) {
   doc.querySelectorAll('link[rel="stylesheet"], style').forEach((el) => el.remove())
 }
 
+function cleanInlineStyleString(st) {
+  if (!st || !MODERN_COLOR_SYNTAX.test(st)) return st
+  const parts = String(st)
+    .split(';')
+    .map((p) => p.trim())
+    .filter(Boolean)
+  const kept = parts.filter((p) => !MODERN_COLOR_SYNTAX.test(p))
+  return kept.length ? kept.join('; ') : ''
+}
+
+function stripUnsupportedColorInlineStyles(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return
+  root.querySelectorAll('[style]').forEach((el) => {
+    const st = el.getAttribute('style')
+    if (!st || !MODERN_COLOR_SYNTAX.test(st)) return
+    const next = cleanInlineStyleString(st)
+    if (next) el.setAttribute('style', next)
+    else el.removeAttribute('style')
+  })
+}
+
 export function syncCloneComputedColorsForHtml2Canvas(orig, clone) {
   syncCloneComputedColorsRecursive(orig, clone)
   if (clone instanceof HTMLElement) {
     clone.querySelectorAll('[class]').forEach((el) => el.removeAttribute('class'))
+    stripUnsupportedColorInlineStyles(clone)
   }
 }
