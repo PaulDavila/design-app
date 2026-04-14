@@ -52,6 +52,18 @@ export function normalizeCssColorForHtml2Canvas(value) {
   }
 }
 
+function setLayoutProp(clone, prop, val) {
+  if (val == null || val === '') return
+  const s = String(val).trim()
+  if (s === '' || s === 'initial' || s === 'inherit') return
+  if (MODERN_COLOR_SYNTAX.test(s)) return
+  clone.style[prop] = val
+}
+
+/**
+ * Sin las hojas de estilo del iframe (quitadas por oklch), el clon solo se pinta con lo que copiamos aquí.
+ * Incluye flex/posicionamiento/absolutos que Tailwind aplicaba por clase.
+ */
 function applyLayoutFromComputed(clone, cs) {
   const set = (prop, val) => {
     if (val && val !== 'none') clone.style[prop] = val
@@ -63,6 +75,8 @@ function applyLayoutFromComputed(clone, cs) {
   set('height', cs.height)
   set('maxWidth', cs.maxWidth)
   set('minHeight', cs.minHeight)
+  set('minWidth', cs.minWidth)
+  set('maxHeight', cs.maxHeight)
   set('display', cs.display)
   set('overflow', cs.overflow)
   set('objectFit', cs.objectFit)
@@ -78,6 +92,55 @@ function applyLayoutFromComputed(clone, cs) {
   set('letterSpacing', cs.letterSpacing)
   set('textDecoration', cs.textDecoration)
   set('opacity', cs.opacity)
+
+  const flexPosKeys = [
+    'position',
+    'top',
+    'left',
+    'right',
+    'bottom',
+    'inset',
+    'zIndex',
+    'transform',
+    'transformOrigin',
+    'flex',
+    'flexDirection',
+    'flexWrap',
+    'flexFlow',
+    'flexGrow',
+    'flexShrink',
+    'flexBasis',
+    'alignItems',
+    'justifyContent',
+    'alignContent',
+    'alignSelf',
+    'gap',
+    'rowGap',
+    'columnGap',
+    'order',
+    'boxSizing',
+    'aspectRatio',
+    'objectPosition',
+    'visibility',
+    'pointerEvents',
+    'overflowX',
+    'overflowY',
+    'float',
+    'clear',
+    'textOverflow',
+    'listStyleType',
+    'listStylePosition',
+    'paddingInlineStart',
+    'paddingInlineEnd',
+    'marginBlock',
+    'marginInline',
+  ]
+  for (const prop of flexPosKeys) {
+    const val = cs[prop]
+    if (val !== undefined && val !== null && String(val).trim() !== '') {
+      setLayoutProp(clone, prop, val)
+    }
+  }
 }
 
 function syncCloneComputedColorsRecursive(orig, clone) {
@@ -155,7 +218,21 @@ function syncCloneComputedColorsRecursive(orig, clone) {
     }
     const sw = cs.strokeWidth
     if (sw && sw !== '0px') clone.setAttribute('stroke-width', sw)
+    const w = cs.width
+    const h = cs.height
+    if (w && w !== 'auto' && w !== '0px') clone.setAttribute('width', w)
+    if (h && h !== 'auto' && h !== '0px') clone.setAttribute('height', h)
     clone.removeAttribute('style')
+  }
+
+  if (orig instanceof HTMLImageElement && clone instanceof HTMLImageElement) {
+    const cs = window.getComputedStyle(orig)
+    setLayoutProp(clone, 'width', cs.width)
+    setLayoutProp(clone, 'height', cs.height)
+    setLayoutProp(clone, 'objectFit', cs.objectFit)
+    setLayoutProp(clone, 'objectPosition', cs.objectPosition)
+    setLayoutProp(clone, 'maxWidth', cs.maxWidth)
+    setLayoutProp(clone, 'maxHeight', cs.maxHeight)
   }
 
   clone.removeAttribute('class')
