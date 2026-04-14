@@ -7,10 +7,11 @@ import { EMAIL_RICH_EDITOR_LIST_CLASSES } from './emailRichTextClasses.js'
 import { htmlOrPlainToPreview } from './utils/sanitizeEmailHtml.js'
 import { LogoCarruselMedio } from './LogoCarruselMedio.jsx'
 import ImageGenCharactersWarning from './ImageGenCharactersWarning.jsx'
+import { syncCloneComputedColorsForHtml2Canvas } from './utils/syncCloneComputedColorsForHtml2Canvas.js'
 import {
-  stripHtml2CanvasCloneDocumentStyles,
-  syncCloneComputedColorsForHtml2Canvas,
-} from './utils/syncCloneComputedColorsForHtml2Canvas.js'
+  injectCarruselRichTextResetCss,
+  prepareHtml2CanvasCloneDocument,
+} from './utils/html2CanvasClonePrep.js'
 
 const RATIOS = {
   '1_1': { label: '1:1', ancho: 1080, alto: 1080, aspectCss: '1 / 1' },
@@ -591,10 +592,11 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: (clonedDoc, clonedElement) => {
-          stripHtml2CanvasCloneDocumentStyles(clonedDoc)
+        onclone: async (clonedDoc, clonedElement) => {
+          await prepareHtml2CanvasCloneDocument(clonedDoc)
           if (clonedElement instanceof HTMLElement) {
             syncCloneComputedColorsForHtml2Canvas(node, clonedElement)
+            injectCarruselRichTextResetCss(clonedDoc, clonedElement)
           }
         },
       })
@@ -989,6 +991,11 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                         alt=""
                         className="block h-full w-full object-cover"
                         draggable={false}
+                        crossOrigin={
+                          /^https?:\/\//i.test(String(carrusel1PreviewImageUrl || ''))
+                            ? 'anonymous'
+                            : undefined
+                        }
                       />
                     </div>
                   </div>
@@ -1115,6 +1122,7 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                     src={mediaUrl(ratio === '4_5' ? RUTA_LOGO_PORTADA_4_5 : RUTA_LOGO_PORTADA)}
                     alt=""
                     className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
+                    crossOrigin="anonymous"
                     aria-hidden
                   />
                 ) : isEditingLastSlide ? (
@@ -1128,6 +1136,7 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                     src={mediaUrl(RUTA_LOGO_CARRUSEL_4_5)}
                     alt=""
                     className="pointer-events-none absolute inset-0 z-30 h-full w-full object-cover"
+                    crossOrigin="anonymous"
                     aria-hidden
                   />
                 ) : (
@@ -1149,6 +1158,7 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                   src={mediaUrl(ratio === '4_5' ? RUTA_LOGO_PORTADA_4_5 : RUTA_LOGO_PORTADA)}
                   alt=""
                   className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
+                  crossOrigin="anonymous"
                   aria-hidden
                 />
               ) : null}

@@ -23,7 +23,16 @@ app.use(authOptional);
 
 // Miniaturas e imágenes base: primero storage (puede ser volumen en prod); si no hay archivo, el build
 // incluye copias en client/dist vía public/ (p. ej. miniatura-reconocimientos.png).
-app.use('/media/plantillas', express.static(path.join(__dirname, 'storage', 'plantillas')));
+// CORS: el cliente usa html2canvas con useCORS; los <img crossOrigin="anonymous"> necesitan ACAO en la respuesta.
+app.use(
+  '/media/plantillas',
+  (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  },
+  express.static(path.join(__dirname, 'storage', 'plantillas'))
+);
 
 app.use('/health', healthRouter);
 app.use('/api/favoritos', favoritosRouter);
