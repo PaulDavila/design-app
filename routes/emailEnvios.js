@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
 const { resolveRecipients } = require('../lib/parseDestinatarios');
+const { ejecutarSmtpCompletar, tipoSmtpFromRow } = require('../services/emailSolicitudEjecutar');
 
 function resolveUsuarioId(req) {
   const raw = req.headers['x-user-id'] ?? req.body?.usuario_id ?? req.query?.usuario_id;
@@ -68,35 +69,6 @@ function rowToApi(r, options = {}) {
         : null,
     error_envio: r.error_envio != null ? String(r.error_envio) : null,
   };
-}
-
-/**
- * Envío SMTP tras POST /completar. Se ejecuta en segundo plano para no cortar la HTTP
- * por timeouts de proxy (p. ej. Railway) mientras el relay SMTP tarda o cuelga.
- */
-async function ejecutarSmtpCompletar(row, payload, enviar_todos, destinatarios, tipoSmtp) {
-  if (tipoSmtp === 'email1' || tipoSmtp === 'newsletter_1') {
-    const { sendEmail1ForSolicitud } = require('../services/email1Send');
-    await sendEmail1ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  } else if (tipoSmtp === 'email2') {
-    const { sendEmail2ForSolicitud } = require('../services/email2Send');
-    await sendEmail2ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  } else if (tipoSmtp === 'email3') {
-    const { sendEmail3ForSolicitud } = require('../services/email3Send');
-    await sendEmail3ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  } else if (tipoSmtp === 'email4') {
-    const { sendEmail4ForSolicitud } = require('../services/email4Send');
-    await sendEmail4ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  } else if (tipoSmtp === 'cumpleanos_1') {
-    const { sendCumpleanos1ForSolicitud } = require('../services/cumpleanosSend');
-    await sendCumpleanos1ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  } else if (tipoSmtp === 'aniversarios_1') {
-    const { sendAniversarios1ForSolicitud } = require('../services/cumpleanosSend');
-    await sendAniversarios1ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  } else if (tipoSmtp === 'reconocimientos_1') {
-    const { sendReconocimientos1ForSolicitud } = require('../services/cumpleanosSend');
-    await sendReconocimientos1ForSolicitud(row, { payload, enviar_todos, destinatarios });
-  }
 }
 
 /**
@@ -566,17 +538,7 @@ router.post('/:id/completar', async (req, res) => {
     const fresh = outRows[0];
 
     let envioMeta = null;
-    const smtpTipos = new Set([
-      'email1',
-      'newsletter_1',
-      'email2',
-      'email3',
-      'email4',
-      'cumpleanos_1',
-      'aniversarios_1',
-      'reconocimientos_1',
-    ]);
-    const tipoSmtp = smtpTipos.has(fresh.editor_tipo) ? fresh.editor_tipo : null;
+    const tipoSmtp = tipoSmtpFromRow(fresh);
     let runSmtpDeferred = false;
     if (enviar_inmediatamente && tipoSmtp) {
       if (fresh.enviado_en) {

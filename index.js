@@ -12,6 +12,7 @@ const nanoBananaRouter = require('./routes/nanoBanana');
 const meRouter = require('./routes/me');
 const emailEnviosRouter = require('./routes/emailEnvios');
 const { isResendEnabled } = require('./lib/resendSend');
+const { startEmailProgramadosPoller } = require('./services/emailProgramadosPoller');
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 4000;
@@ -75,5 +76,10 @@ app.listen(PORT, HOST, () => {
       '[design-app] RESEND_FROM vacío: se usa onboarding@resend.dev y Resend solo permite destinatarios de la cuenta. ' +
         'Con dominio verificado, define en Railway (Variables) algo como: RESEND_FROM=ABC Logística <design@abclogistica.mx>'
     );
+  }
+  if (String(process.env.EMAIL_PROGRAMADOS_POLL_MS || '').trim().toLowerCase() === '0') {
+    console.warn('[design-app] Poller de correos programados desactivado (EMAIL_PROGRAMADOS_POLL_MS=0).');
+  } else {
+    startEmailProgramadosPoller();
   }
 });

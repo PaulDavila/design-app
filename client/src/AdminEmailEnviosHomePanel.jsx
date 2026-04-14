@@ -410,11 +410,23 @@ export default function AdminEmailEnviosHomePanel({ userId, viewerRole = 'user',
                     <span className="font-semibold">Error al enviar por correo: </span>
                     {s.error_envio}
                   </p>
-                ) : ok && s.editor_tipo && ['email1', 'newsletter_1', 'email2', 'email3', 'email4', 'cumpleanos_1', 'aniversarios_1', 'reconocimientos_1'].includes(s.editor_tipo) ? (
+                ) : ok &&
+                  s.editor_tipo &&
+                  ['email1', 'newsletter_1', 'email2', 'email3', 'email4', 'cumpleanos_1', 'aniversarios_1', 'reconocimientos_1'].includes(
+                    s.editor_tipo
+                  ) ? (
                   <p className="mt-2 text-[11px] text-slate-600">
-                    {s.enviado_en
-                      ? `Enviado por SMTP: ${new Date(s.enviado_en).toLocaleString('es-MX')}`
-                      : 'Correo en cola en el servidor (unos segundos). Recarga o espera el refresco si no ves “Enviado”.'}
+                    {s.enviado_en ? (
+                      `Enviado por SMTP: ${new Date(s.enviado_en).toLocaleString('es-MX')}`
+                    ) : (
+                      (() => {
+                        const prog = new Date(s.fecha_hora_programada).getTime()
+                        const futuro = Number.isFinite(prog) && prog > Date.now()
+                        return futuro
+                          ? 'Pendiente: el servidor enviará este correo automáticamente al llegar la fecha y hora programadas.'
+                          : 'En cola de envío automático (el servidor revisa cada minuto). Recarga o espera el refresco si no ves “Enviado”.'
+                      })()
+                    )}
                   </p>
                 ) : null}
                 {renderAccionesListaDia(s)}
