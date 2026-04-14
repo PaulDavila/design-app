@@ -1,15 +1,12 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Download } from 'lucide-react'
-import html2canvas from 'html2canvas'
+import { toJpeg } from 'html-to-image'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { EMAIL_RICH_EDITOR_LIST_CLASSES } from './emailRichTextClasses.js'
 import { htmlOrPlainToPreview } from './utils/sanitizeEmailHtml.js'
 import { LogoCarruselMedio } from './LogoCarruselMedio.jsx'
 import ImageGenCharactersWarning from './ImageGenCharactersWarning.jsx'
-import { syncCloneComputedColorsForHtml2Canvas } from './utils/syncCloneComputedColorsForHtml2Canvas.js'
-import { inlineRasterImagesAsDataUrls } from './utils/html2CanvasClonePrep.js'
-
 const RATIOS = {
   '1_1': { label: '1:1', ancho: 1080, alto: 1080, aspectCss: '1 / 1' },
   '4_5': { label: '4:5', ancho: 1080, alto: 1350, aspectCss: '4 / 5' },
@@ -581,29 +578,20 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
       if (typeof document !== 'undefined' && document.fonts?.ready) {
         await document.fonts.ready
       }
-      const nw = Math.max(1, node.offsetWidth)
-      const scale = targetW / nw
-      const canvas = await html2canvas(node, {
-        scale,
-        useCORS: true,
-        allowTaint: false,
-        imageTimeout: 30000,
+      /** html2canvas falla a menudo con transform + overflow + object-cover (arte Gemini). toJpeg usa foreignObject = pintado nativo, igual que la vista previa. */
+      const rect = node.getBoundingClientRect()
+      const nw = Math.max(1, Math.round(rect.width))
+      const nh = Math.max(1, Math.round(rect.height))
+      const dataUrl = await toJpeg(node, {
+        quality: 0.92,
         backgroundColor: '#ffffff',
-        logging: false,
-        onclone: async (_clonedDoc, clonedElement) => {
-          syncCloneComputedColorsForHtml2Canvas(node, clonedElement)
-          await inlineRasterImagesAsDataUrls(clonedElement)
-        },
+        width: nw,
+        height: nh,
+        canvasWidth: targetW,
+        canvasHeight: targetH,
+        pixelRatio: 1,
+        cacheBust: true,
       })
-      const out = document.createElement('canvas')
-      out.width = targetW
-      out.height = targetH
-      const ctx = out.getContext('2d')
-      if (!ctx) return
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, targetW, targetH)
-      ctx.drawImage(canvas, 0, 0, targetW, targetH)
-      const dataUrl = out.toDataURL('image/jpeg', 0.92)
       const safeId = String(panelId).replace(/[^a-z0-9-]+/gi, '_')
       const a = document.createElement('a')
       a.href = dataUrl
