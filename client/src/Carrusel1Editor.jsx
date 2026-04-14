@@ -8,11 +8,7 @@ import { htmlOrPlainToPreview } from './utils/sanitizeEmailHtml.js'
 import { LogoCarruselMedio } from './LogoCarruselMedio.jsx'
 import ImageGenCharactersWarning from './ImageGenCharactersWarning.jsx'
 import { syncCloneComputedColorsForHtml2Canvas } from './utils/syncCloneComputedColorsForHtml2Canvas.js'
-import {
-  inlineRasterImagesAsDataUrls,
-  injectCarruselExportCaptureCss,
-  prepareHtml2CanvasCloneDocument,
-} from './utils/html2CanvasClonePrep.js'
+import { inlineRasterImagesAsDataUrls } from './utils/html2CanvasClonePrep.js'
 
 const RATIOS = {
   '1_1': { label: '1:1', ancho: 1080, alto: 1080, aspectCss: '1 / 1' },
@@ -594,13 +590,9 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
         imageTimeout: 30000,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: async (clonedDoc, clonedElement) => {
-          await prepareHtml2CanvasCloneDocument(clonedDoc)
-          if (clonedElement instanceof HTMLElement) {
-            syncCloneComputedColorsForHtml2Canvas(node, clonedElement)
-            injectCarruselExportCaptureCss(clonedDoc, clonedElement)
-            await inlineRasterImagesAsDataUrls(clonedElement)
-          }
+        onclone: async (_clonedDoc, clonedElement) => {
+          syncCloneComputedColorsForHtml2Canvas(node, clonedElement)
+          await inlineRasterImagesAsDataUrls(clonedElement)
         },
       })
       const out = document.createElement('canvas')
@@ -971,7 +963,6 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
             >
               <div
                 ref={portadaGrayRef}
-                data-h2c-portada-canvas
                 className={`relative box-border flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[20px] ${
                   previewPanelId !== 'portada' ? 'z-0' : ''
                 }`}
@@ -986,7 +977,6 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
               >
                 {isCarrusel1 && carrusel1PreviewImageUrl ? (
                   <div
-                    data-h2c-clip-art
                     className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[20px]"
                     aria-hidden
                   >
@@ -1068,7 +1058,6 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                     >
                       <div
                         ref={slideTextBoxInnerRef}
-                        data-h2c-rich-flow
                         className={`flex h-full min-h-0 w-full flex-col ${
                           isCarruselNumerado ? 'items-start justify-start' : 'items-center justify-center'
                         } overflow-hidden`}
@@ -1104,7 +1093,6 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                   >
                     <div
                       ref={portadaTextBoxInnerRef}
-                      data-h2c-rich-flow
                       className="flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden"
                     >
                       <div
@@ -1134,7 +1122,6 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                   />
                 ) : isEditingLastSlide ? (
                   <div
-                    data-h2c-clip-art
                     className="pointer-events-none absolute inset-0 z-30 overflow-hidden"
                     dangerouslySetInnerHTML={{ __html: finalSlideSvgHtml }}
                     aria-hidden
@@ -1149,7 +1136,6 @@ export default function Carrusel1Editor({ plantilla, numSlidesTotal }) {
                   />
                 ) : (
                   <div
-                    data-h2c-clip-art
                     className="pointer-events-none absolute inset-0 z-30 overflow-hidden"
                     aria-hidden
                   >

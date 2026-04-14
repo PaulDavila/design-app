@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mapeo — Email 2 (editor ↔ HTML)</title>
+    <!--
+      ORDEN EN EL EDITOR (lateral) — anota aquí o en el cuerpo qué #id conecta con qué campo:
+
+      [0] Fondo del correo     → #outer-wrap (style background-color)
+      [1] Primer bloque texto  → #e2-bloque-1
+      [2] Segundo bloque texto → #e2-bloque-2
+      [3] Fondo cuadro imagen 1 → #e2-img-1 (background)
+      [4] Prompt IA imagen 1   → (no va en HTML del correo; solo generación)
+      [5] Fondo cuadro imagen 2 → #e2-img-2 (background)
+      [6] Prompt IA imagen 2   → (no va en HTML del correo)
+      [7] Tercer bloque texto  → #e2-bloque-3
+      [8] Footer               → #e2-footer
+      Logo plantilla           → img#e2-logo (definicion.email2.logoRuta)
+    -->
+    <style>
+      body {
+        margin: 0;
+        font-family: Verdana, Geneva, sans-serif;
+      }
+      a {
+        color: #7c3aed;
+      }
+      .mapa {
+        max-width: 720px;
+        margin: 0 auto 24px;
+        padding: 16px 20px;
+        background: #1e3a5f;
+        color: #e2e8f0;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .mapa code {
+        background: rgb(255 255 255 / 0.12);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      #outer-wrap {
+        box-sizing: border-box;
+        max-width: 600px;
+        margin: 0 auto 48px;
+        padding: 24px;
+        background-color: #dfe3e6;
+      }
+      .card {
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+        background: #fff;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+      }
+      .header-logo {
+        display: flex;
+        justify-content: center;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 16px 24px;
+      }
+      .header-logo img {
+        height: 52px;
+        width: auto;
+        max-width: min(290px, 92%);
+        object-fit: contain;
+      }
+      .body-pad {
+        padding: 20px 24px;
+      }
+      .bloque {
+        font-size: 14px;
+        line-height: 1.625;
+        color: #1e293b;
+        margin-bottom: 16px;
+        padding: 10px 12px;
+        border: 2px dashed #93c5fd;
+        border-radius: 8px;
+        background: #eff6ff;
+      }
+      .bloque .tag {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #2563eb;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+      .img-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 12px;
+        margin: 16px 0;
+      }
+      @media (max-width: 480px) {
+        .img-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cuadro-img {
+        position: relative;
+        min-height: 170px;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .cuadro-img .ph {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: #475569;
+      }
+      .footer-zone {
+        border-top: 1px solid #f1f5f9;
+        background: rgb(248 250 252 / 0.8);
+        padding: 16px 24px;
+      }
+      .footer-zone .bloque {
+        text-align: center;
+        font-size: 12px;
+        color: #475569;
+        margin-bottom: 12px;
+      }
+      .social {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        font-size: 12px;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mapa">
+      <strong>Email 2 — guía editor → HTML.</strong> Modifica este archivo para señalar cambios de
+      orden o nuevos bloques. Cada <code>#e2-…</code> debe coincidir con un campo del editor (ver
+      comentario al inicio del archivo).
+    </div>
+
+    <div id="outer-wrap">
+      <div class="card">
+        <div class="header-logo">
+          <img
+            id="e2-logo"
+            src="/media/plantillas/miniaturas/logo-abc-logistica.svg"
+            alt="ABC Logística"
+          />
+        </div>
+
+        <div class="body-pad">
+          <div id="e2-bloque-1" class="bloque">
+            <span class="tag">Editor: Primer bloque de texto</span>
+            <p>Contenido de ejemplo. Sustituir por HTML del editor.</p>
+          </div>
+
+          <div id="e2-bloque-2" class="bloque">
+            <span class="tag">Editor: Segundo bloque de texto</span>
+            <p>Contenido de ejemplo.</p>
+          </div>
+
+          <div class="img-row">
+            <div id="e2-img-1" class="cuadro-img" style="background-color: #80beda">
+              <div class="ph">Imagen 1 + fondo editor</div>
+            </div>
+            <div id="e2-img-2" class="cuadro-img" style="background-color: #b4d173">
+              <div class="ph">Imagen 2 + fondo editor</div>
+            </div>
+          </div>
+
+          <div id="e2-bloque-3" class="bloque">
+            <span class="tag">Editor: Tercer bloque de texto</span>
+            <p>Después de las imágenes (en el React aún no está en la vista previa).</p>
+          </div>
+        </div>
+
+        <div class="footer-zone">
+          <div id="e2-footer" class="bloque">
+            <span class="tag">Editor: Footer</span>
+            <p>Legal, contacto…</p>
+          </div>
+          <div class="social">
+            <span>Facebook</span>
+            <span>LinkedIn</span>
+            <span>Instagram</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
