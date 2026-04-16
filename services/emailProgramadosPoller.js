@@ -27,8 +27,10 @@ async function procesarColaEmailProgramadosUnaPasada() {
       return;
     }
     try {
-      const [rows] = await conn.query(
-        `SELECT * FROM email_envios_solicitud
+      // Solo ids en el ORDER BY: evita ER_OUT_OF_SORTMEMORY cuando hay muchos
+      // programados y payload JSON grande (SELECT * metía todo en el sort buffer).
+      const [idRows] = await conn.query(
+        `SELECT id FROM email_envios_solicitud
          WHERE estado = 'programado'
            AND enviado_en IS NULL
            AND (error_envio IS NULL OR error_envio = '')
@@ -36,6 +38,17 @@ async function procesarColaEmailProgramadosUnaPasada() {
          ORDER BY fecha_hora_programada ASC, id ASC
          LIMIT 10`
       );
+      const ids = idRows.map((r) => r.id).filter((id) => id != null);
+      if (!ids.length) {
+        return;
+      }
+      const ph = ids.map(() => '?').join(',');
+      const [fullRows] = await conn.query(
+        `SELECT * FROM email_envios_solicitud WHERE id IN (${ph})`,
+        ids
+      );
+      const byId = new Map(fullRows.map((r) => [r.id, r]));
+      const rows = ids.map((id) => byId.get(id)).filter(Boolean);
       for (const row of rows) {
         const tipoSmtp = tipoSmtpFromRow(row);
         if (!tipoSmtp) {
