@@ -301,8 +301,7 @@ router.post('/enviar-prueba', async (req, res) => {
 
 /**
  * GET /api/email-envios
- * admin: pendiente_revision + programado.
- * administrativo: solo programado (no ve cola de revisión de nadie).
+ * admin y administrativo: pendiente_revision + programado (misma cola global).
  * user: todos los programados + sus propias pendiente_revision.
  */
 router.get('/', async (req, res) => {
@@ -321,7 +320,7 @@ router.get('/', async (req, res) => {
     } else if (role === 'administrativo') {
       [rows] = await pool.query(
         `SELECT ${LIST_SELECT_COLS} FROM email_envios_solicitud
-         WHERE estado = 'programado'
+         WHERE estado IN ('pendiente_revision', 'programado')
          ORDER BY fecha_hora_programada ASC, id ASC`
       );
     } else {
